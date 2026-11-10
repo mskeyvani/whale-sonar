@@ -1,0 +1,35 @@
+name: collect
+on:
+  schedule:
+    - cron: "3-59/5 * * * *"   # every 5 minutes (GitHub's minimum); minute 3 avoids the busy top of the hour
+  workflow_dispatch:           # lets you press "Run workflow" manually
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Collect whale data
+        run: python collector/whale_collector.py --out out/data.json
+      - name: Publish data.json to the "data" branch (history is overwritten each time)
+        run: |
+          mkdir -p /tmp/pub && cp out/data.json /tmp/pub/data.json
+          cd /tmp/pub
+          git init -q -b data
+          git config user.name "whale-bot"
+          git config user.email "whale-bot@users.noreply.github.com"
+          git add data.json
+          git commit -q -m "data $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git push -q --force origin data
