@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Whale Sonar | داشبورد نهنگ‌ها</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap">
+<style>
+:root{--bg:#f3f5f9;--sf:#fff;--s2:#eef2f8;--tx:#0f1722;--mu:#66738a;--bd:#dfe5ee;--g:#0e9f6e;--r:#e0344a;--ac:#3b6cf6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a0e14;--sf:#121822;--s2:#18202c;--tx:#e6ebf2;--mu:#8593a8;--bd:#223044;--g:#22d39a;--r:#ff5d73;--ac:#6d9bff;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0a0e14;--sf:#121822;--s2:#18202c;--tx:#e6ebf2;--mu:#8593a8;--bd:#223044;--g:#22d39a;--r:#ff5d73;--ac:#6d9bff;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg) radial-gradient(800px 380px at 90% -8%,color-mix(in srgb,var(--ac) 18%,transparent),transparent) no-repeat;color:var(--tx);font-family:Vazirmatn,Tahoma,system-ui,sans-serif;font-size:14px;line-height:1.6;font-variant-numeric:tabular-nums}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--sf);z-index:11}
+.wrap{max-width:1120px;margin:0 auto;padding:16px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:12;background:color-mix(in srgb,var(--sf) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--bd)}
+.top .wrap{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding-top:10px;padding-bottom:10px}
+.logo{display:flex;align-items:center;gap:10px}.logo b{font-size:18px;letter-spacing:.3px}.mk{font-size:22px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.g{color:var(--g)}.r{color:var(--r)}.ac{color:var(--ac)}.mu{color:var(--mu)}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:99px;border:1px solid currentColor;font-weight:600;font-size:12px}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;animation:p 1.8s infinite}
+@keyframes p{50%{opacity:.25}}
+.btn,select,input[type=search]{font:inherit;color:var(--tx);background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:6px 12px}
+.btn{cursor:pointer}.btn.pri{background:var(--ac);border-color:var(--ac);color:#fff}
+.note{background:var(--sf);border:1px dashed var(--bd);border-radius:12px;padding:8px 14px;margin-bottom:14px;color:var(--mu)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:14px 16px;position:relative;overflow:hidden;animation:f .4s}
+.card::after{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,var(--ac),var(--g))}
+.card b{display:block;font-size:24px;line-height:1.3}.card small{color:var(--mu)}
+.card svg{display:block;margin:2px auto 0}
+@keyframes f{from{opacity:0;transform:translateY(6px)}}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.seg{display:flex;background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:3px}
+.seg button{font:inherit;border:0;background:none;color:var(--mu);padding:5px 16px;border-radius:9px;cursor:pointer}
+.seg button.on{background:var(--sf);color:var(--tx);font-weight:700;box-shadow:0 1px 4px #0003}
+.panel,.tw{background:var(--sf);border:1px solid var(--bd);border-radius:16px}
+.tw{overflow-x:auto;margin-top:10px}
+table{width:100%;border-collapse:collapse;white-space:nowrap}
+th,td{padding:9px 14px;text-align:right;border-bottom:1px solid var(--bd)}
+th{color:var(--mu);font-weight:600;font-size:12px;background:var(--s2)}
+td.num{direction:ltr;text-align:left}td.g,td.r{font-weight:700}
+tbody tr:hover{background:var(--s2)}tr:last-child td{border-bottom:0}
+.bar{display:flex;height:8px;border-radius:5px;overflow:hidden;background:var(--bd);min-width:80px;margin:8px 0}.bar i{display:block;height:100%}
+.bf{direction:ltr;padding:8px 0}
+.bfh,.bfr{display:grid;grid-template-columns:1fr 96px 1fr;gap:8px;align-items:center;padding:6px 16px}
+.bfh{font-size:12px;font-weight:700}.bfh span:nth-child(2){text-align:center}
+.bfr:hover{background:var(--s2)}
+.side{display:flex;align-items:center;gap:8px}.side.s{justify-content:flex-end}
+.side i{display:block;height:16px;border-radius:5px;min-width:2px}.s i{background:linear-gradient(270deg,var(--r),color-mix(in srgb,var(--r) 45%,transparent))}.l i{background:linear-gradient(90deg,var(--g),color-mix(in srgb,var(--g) 45%,transparent))}
+.side em{font-style:normal;font-size:12px;color:var(--mu);white-space:nowrap}
+.mid{text-align:center;line-height:1.2}.mid b{display:block}.mid small{font-size:11px;color:var(--mu)}
+.wg{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.wc{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:14px;animation:f .4s}
+.wc summary{list-style:none;cursor:pointer}.wc summary::-webkit-details-marker{display:none}
+.wt{display:flex;align-items:center;gap:10px}
+.av{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px}
+.nm{flex:1;min-width:0;line-height:1.3}.nm b{display:block;direction:ltr;text-align:right;overflow:hidden;text-overflow:ellipsis}
+.tag{font-size:11px;font-weight:700;padding:1px 9px;border-radius:99px;border:1px solid currentColor}
+.wm{display:flex;justify-content:space-between;font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:12px;padding:2px 9px;border-radius:8px;background:var(--s2);border:1px solid var(--bd);direction:ltr}
+footer{color:var(--mu);margin-top:18px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="top"><div class="wrap">
+  <div class="logo"><span class="mk">🐋</span><b>Whale Sonar</b><span class="mu">داشبورد نهنگ‌ها</span></div>
+  <div class="tools"><span id="st" class="badge"></span><span id="age" class="mu"></span>
+  <button id="th" class="btn" title="تغییر تم">◐</button>
+  <label class="btn pri" for="f">بارگذاری snapshot.json</label><input id="f" type="file" accept=".json,application/json" hidden></div>
+</div></div>
+<div class="wrap">
+<div id="msg" class="note"></div>
+<div id="cards" class="cards"></div>
+<div class="ctl">
+  <div class="seg"><button class="on" data-t="herd">گله</button><button data-t="whales">نهنگ‌ها</button><button data-t="pos">پوزیشن‌ها</button></div>
+  <input id="q" type="search" placeholder="جست‌وجوی نماد (BTC ...)">
+  <select id="sd"><option value="">همه‌ی سمت‌ها</option><option value="L">Long</option><option value="S">Short</option></select>
+  <select id="mn"><option value="0">همه‌ی حجم‌ها</option><option value="1e5">۱۰۰K و بالاتر</option><option value="1e6">۱M و بالاتر</option><option value="1e7">۱۰M و بالاتر</option></select>
+</div>
+<div id="view"></div>
+<footer>این پنل فقط اطلاعات نمایش می‌دهد و توصیه‌ی مالی نیست. داده‌ها از API عمومی Hyperliquid گرفته می‌شود.</footer>
+</div>
+<script>
+// [label, perp account value, [coin, side, notional, entry, liq, uPnL, leverage]]
+const SAMPLE=[
+["0x5b5d..c060",98.77e6,[["BTC","S",176.37e6,76390.2,122336.8,3.5e6,5],["ETH","S",123.75e6,2322.72,4036.79,11.2e6,5],["SOL","S",54.63e6,94.3346,260.92,4.67e6,7],["HYPE","S",47.99e6,75.4377,238.5,108e3,5],["ZEC","S",43.51e6,1478.36,4010.96,10.89e6,3]]],
+["0xb83d..6e36",86.25e6,[["BTC","S",156.58e6,77924.2,115519.52,6.31e6,5],["HYPE","S",72.68e6,75.2795,157.2,10e3,5],["ZEC","S",58.58e6,1336.39,2779.54,7.62e6,3],["SOL","S",18.52e6,91.3463,481.55,945e3,5],["ETH","S",18.05e6,2375.02,12195.84,2.07e6,5]]],
+["0x45d2..4029",14.39e6,[["BTC","S",32.66e6,77001.5,168473.98,912e3,20],["HYPE","S",32.58e6,28.7925,161.94,-20.11e6,10],["ETH","S",29.72e6,2443.6,5032.99,4.37e6,20]]],
+["John Wick",23.63e6,[["BTC","S",96.97e6,78530.8,91369.44,4.7e6,25],["ETH","S",9.56e6,2232.74,6845.65,461e3,25],["XRP","S",4.46e6,1.2392,6.2738,581e3,20]]],
+["0xdf95..7d72",12.26e6,[["ETH","S",53.58e6,2370.86,3887.81,6.05e6,25],["BTC","S",46.9e6,81404.7,146043.31,4.07e6,40]]],
+["0x082e..ca88",17.84e6,[["HYPE","L",103.65e6,38.6755,68.2831,50.27e6,5]]],
+["0x8ea8..edbc",23.04e6,[["BTC","L",74.83e6,72771.2,51705.85,2.06e6,3]]],
+["0xe813..6d74",5.18e6,[["ETH","L",52.15e6,2207.47,1311.05,-1.94e6,25]]],
+["0xea00..a918",8.17e6,[["ETH","L",19.15e6,2003.01,1130.46,1.11e6,5],["HYPE","L",7.5e6,67.7326,null,728e3,10],["ZEC","L",5.89e6,739.16,null,2.19e6,5]]],
+["BobbyBigSize",21.67e6,[["HYPE","S",27.86e6,85.2557,118.83,3.73e6,5],["BTC","S",17.89e6,75912.6,148351.36,253e3,30],["XRP","L",6.02e6,1.1275,null,-173e3,20]]],
+["0xfc66..ca06",15.74e6,[["BTC","S",15.88e6,75564.5,143398.14,140e3,20],["XRP","L",9.61e6,1.1384,null,-372e3,20],["SOL","L",6.23e6,86.7869,null,9e3,20]]],
+["Auros",5.02e6,[["BTC","L",7.67e6,74602.4,35720.24,23e3,40],["XRP","S",2.21e6,1.2853,3.0059,386e3,20]]]
+];
+const $=s=>document.querySelector(s);
+const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+const M=v=>{if(v==null)return"-";const a=Math.abs(v);if(a<1e3)return"<1K";return a>=1e6?(v/1e6).toFixed(2)+"M":Math.round(v/1e3)+"K"};
+const P=v=>v==null?"-":v>=100?v.toLocaleString("en",{maximumFractionDigits:2}):v.toFixed(4);
+let D=SAMPLE.map(w=>({label:w[0],acct:w[1],pos:w[2].map(p=>({coin:p[0],side:p[1],n:p[2],entry:p[3],liq:p[4],upnl:p[5],lev:p[6]}))}));
+let meta={sample:true,time:null},tab="herd";
+function bar(l,s){const b=el("div","bar"),a=el("i"),c=el("i"),t=(l+s)||1;a.style.width=(100*l/t)+"%";a.style.background="var(--g)";c.style.width=(100*s/t)+"%";c.style.background="var(--r)";b.append(a,c);return b}
+function tbl(heads,rows){const w=el("div","tw"),t=el("table"),tr=el("tr");heads.forEach(h=>tr.append(el("th",0,h)));const th=el("thead");th.append(tr);t.append(th);const tb=el("tbody");rows.forEach(r=>{const tr=el("tr");r.forEach(c=>{const td=el("td",c[1]||"",c[0]);if(c[2])td.append(c[2]);tr.append(td)});tb.append(tr)});t.append(tb);w.append(t);return w}
+function flat(){const q=$("#q").value.trim().toUpperCase(),sd=$("#sd").value,mn=+$("#mn").value,o=[];D.forEach(w=>w.pos.forEach(p=>{if(p.n>=mn&&(!q||p.coin.toUpperCase().includes(q))&&(!sd||p.side===sd))o.push({...p,w:w.label,acct:w.acct})}));return o.sort((a,b)=>b.n-a.n)}
+function posRow(p,withW){const c=p.side==="L"?"g":"r";const r=[];if(withW)r.push([p.w,"num"]);r.push([p.coin,"num"],[p.side==="L"?"Long":"Short",c],[M(p.n),"num"],[P(p.entry),"num"],[P(p.liq),"num"],[M(p.upnl),"num "+(p.upnl>=0?"g":"r")],[p.lev==null?"-":p.lev+"x","num"]);return r}
+const PH=["نماد","سمت","حجم","Entry","Liq","سود/زیان","اهرم"];
+function gauge(p){const a=Math.PI*(1-p),x=60+50*Math.cos(a),y=60-50*Math.sin(a),f=(c,d)=>`<path d="${d}" fill="none" stroke="${c}" stroke-width="10" stroke-linecap="round"/>`;
+  return `<svg viewBox="0 0 120 68" width="132">${f("var(--r)","M10 60A50 50 0 0 1 110 60")}${p>.01?f("var(--g)",`M10 60A50 50 0 0 1 ${x.toFixed(1)} ${y.toFixed(1)}`):""}</svg>`}
+function render(){
+  const F=flat(),v=$("#view");v.replaceChildren();
+  const L=F.filter(p=>p.side==="L").reduce((s,p)=>s+p.n,0),S=F.filter(p=>p.side==="S").reduce((s,p)=>s+p.n,0),T=(L+S)||1;
+  const cards=$("#cards");cards.replaceChildren();
+  const card=(k,val,sub,extra)=>{const c=el("div","card");c.append(el("span","mu",k),el("b",0,val));if(sub)c.append(el("small",0,sub));if(extra)c.append(extra);cards.append(c)};
+  const C={};F.forEach(p=>C[p.coin]=(C[p.coin]||0)+p.n);const tc=Object.entries(C).sort((a,b)=>b[1]-a[1])[0];
+  card("نهنگ‌های دارای پوزیشن",new Set(F.map(p=>p.w)).size,F.length+" پوزیشن باز");
+  card("حجم کل پوزیشن‌ها","$"+M(L+S),"Long "+M(L)+" · Short "+M(S));
+  const gd=el("div");gd.innerHTML=gauge(L/T);card("تمایل بازار (به دلار)",Math.round(100*L/T)+"% Long",null,gd);
+  card("پرحجم‌ترین نماد",tc?tc[0]:"-",tc?"$"+M(tc[1]):"");
+  if(!F.length){v.append(el("div","note","با این فیلترها پوزیشنی پیدا نشد."));return}
+  if(tab==="herd"){
+    const H={};F.forEach(p=>{const h=H[p.coin]||(H[p.coin]={l:0,s:0,nl:0,ns:0,mx:0});if(p.side==="L"){h.l+=p.n;h.nl++}else{h.s+=p.n;h.ns++}h.mx=Math.max(h.mx,p.n)});
+    const rows=Object.entries(H).sort((a,b)=>(b[1].l+b[1].s)-(a[1].l+a[1].s)).slice(0,20),mx=Math.max(...rows.map(r=>Math.max(r[1].l,r[1].s)))||1;
+    const box=el("div","panel bf"),hd=el("div","bfh");hd.append(el("span","r","◀ Short"),el("span","mu","نماد"),el("span","g","Long ▶"));box.append(hd);
+    rows.forEach(([c,h])=>{const r=el("div","bfr"),s=el("div","side s"),l=el("div","side l"),sb=el("i"),lb=el("i"),m=el("div","mid");
+      sb.style.width=(70*h.s/mx)+"%";lb.style.width=(70*h.l/mx)+"%";
+      s.append(el("em",0,M(h.s)+" · "+h.ns),sb);l.append(lb,el("em",0,h.nl+" · "+M(h.l)));
+      m.append(el("b",0,c),el("small",0,"#1 whale "+Math.round(100*h.mx/(h.l+h.s))+"%"));r.append(s,m,l);box.append(r)});
+    v.append(box);
+  }else if(tab==="whales"){
+    const G={};F.forEach(p=>(G[p.w]||(G[p.w]=[])).push(p));
+    const tot=a=>a.reduce((s,p)=>s+p.n,0),grid=el("div","wg");
+    Object.entries(G).sort((a,b)=>tot(b[1])-tot(a[1])).forEach(([w,ps])=>{
+      const l=tot(ps.filter(p=>p.side==="L")),s=tot(ps.filter(p=>p.side==="S")),d=el("details","wc"),sm=el("summary"),top=el("div","wt"),av=el("span","av",w.replace(/^0x/,"").slice(0,2).toUpperCase()),nm=el("span","nm"),ch=el("div","chips"),wm=el("div","wm");
+      av.style.background="hsl("+([...w].reduce((a,c)=>a+c.charCodeAt(0),0)*7%360)+" 55% 45%)";
+      nm.append(el("b",0,w),el("small","mu","حساب "+M(ps[0].acct)));
+      top.append(av,nm,el("span","tag "+(l>=s?"g":"r"),l>=s?"Long-heavy":"Short-heavy"));
+      wm.append(el("span",0,"حجم $"+M(l+s)),el("span","mu",ps.length+" پوزیشن · برای جزئیات کلیک کن"));
+      ps.slice(0,3).forEach(p=>ch.append(el("span","chip "+(p.side==="L"?"g":"r"),p.coin+" "+M(p.n))));
+      sm.append(top,bar(l,s),wm,ch);d.append(sm,tbl(PH,ps.map(p=>posRow(p,false))));grid.append(d)});
+    v.append(grid);
+  }else{
+    v.append(tbl(["نهنگ",...PH],F.slice(0,200).map(p=>posRow(p,true))));
+  }
+}
+const DATA_URL="https://raw.githubusercontent.com/mskeyvani/whale-sonar/data/data.json";
+function mapSnap(s){return (s.whales||[]).map(w=>({label:w.name||(String(w.address).slice(0,6)+".."+String(w.address).slice(-4)),acct:w.account_value,pos:(w.positions||[]).map(p=>({coin:String(p.coin),side:p.side==="LONG"?"L":"S",n:+p.notional||0,entry:p.entry,liq:p.liq,upnl:p.upnl,lev:p.leverage}))}))}
+async function pull(){
+  try{const r=await fetch(DATA_URL+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error(r.status);const j=await r.json();
+    D=mapSnap(j);meta={sample:false,live:true,time:Date.parse(j.generated_at)||Date.now()};status();render();}
+  catch(e){if(meta.sample)$("#msg").textContent="دریافت خودکار داده ممکن نشد؛ نمونه نمایش داده می‌شود. می‌توانی snapshot.json را دستی بارگذاری کنی."}
+}
+function status(){
+  const s=$("#st"),a=$("#age");
+  if(meta.sample){s.textContent="نمونه";s.className="badge ac";a.textContent="";$("#msg").textContent="این‌ها بخشی از داده‌ی اجرای واقعی قبلی توست. فایل snapshot.json را بارگذاری کن تا داده‌ی خودت نمایش داده شود.";return}
+  const m=Math.max(0,Math.round((Date.now()-meta.time)/60000));
+  const st=m<=15?["Fresh","g"]:m<=45?["Cached","ac"]:["Delayed","r"];
+  s.textContent=st[0];s.className="badge "+st[1];a.textContent="آخرین به‌روزرسانی: "+m+" دقیقه پیش";
+  $("#msg").textContent=meta.live?"داده‌ی زنده از جمع‌آوری خودکار (هر چند دقیقه به‌روز می‌شود)":"داده‌ی بارگذاری‌شده از فایل snapshot.json";
+}
+$("#f").addEventListener("change",e=>{
+  const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{
+    const s=JSON.parse(r.result);
+    D=(s.whales||[]).map(w=>({label:w.name||(String(w.address).slice(0,6)+".."+String(w.address).slice(-4)),acct:w.account_value,pos:(w.positions||[]).map(p=>({coin:String(p.coin),side:p.side==="LONG"?"L":"S",n:+p.notional||0,entry:p.entry,liq:p.liq,upnl:p.upnl,lev:p.leverage}))}));
+    meta={sample:false,time:Date.parse(s.generated_at)||Date.now()};status();render();
+  }catch(err){$("#msg").textContent="فایل خوانده نشد. مطمئن شو snapshot.json خروجی whale_probe2.py است."}};
+  r.readAsText(f);
+});
+document.querySelectorAll("[data-t]").forEach(b=>b.addEventListener("click",()=>{tab=b.dataset.t;document.querySelectorAll("[data-t]").forEach(x=>x.classList.toggle("on",x===b));render()}));
+["#q","#sd","#mn"].forEach(s=>$(s).addEventListener("input",render));
+document.documentElement.dataset.theme="dark";
+$("#th").onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==="dark"?"light":"dark"};
+status();render();
+pull();setInterval(pull,120000);setInterval(()=>{if(!meta.sample)status()},30000);
+</script>
+</body>
+</html>
