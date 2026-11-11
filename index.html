@@ -70,6 +70,9 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
 .sec{margin:18px 0 8px;font-size:15px;font-weight:700}
 .ins{margin:0;padding:12px 14px;padding-inline-start:30px;line-height:2}
 .cr{display:grid;grid-template-columns:130px 1fr auto;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bd)}.cr:last-child{border:0}
+.tip{display:inline-grid;place-items:center;width:16px;height:16px;margin-inline-start:6px;border-radius:50%;background:var(--s2);border:1px solid var(--bd);color:var(--mu);font-size:11px;cursor:help;position:relative;font-style:normal}
+.tip:hover::after,.tip:focus::after{content:attr(data-tip);position:absolute;z-index:30;top:22px;inset-inline-start:-10px;width:240px;padding:8px 10px;border-radius:10px;background:var(--sf);border:1px solid var(--bd);box-shadow:0 6px 20px #0006;color:var(--tx);font-size:12px;line-height:1.7;white-space:normal;text-align:start;font-weight:400}
+.lk{color:var(--ac);cursor:pointer;font-weight:700;direction:ltr;display:inline-block}
 </style>
 </head>
 <body>
@@ -84,7 +87,7 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
 <div id="msg" class="note"></div>
 <div id="cards" class="cards"></div>
 <div class="ctl">
-  <div class="seg"><button class="on" data-t="herd">گله</button><button data-t="whales">نهنگ‌ها</button><button data-t="pos">پوزیشن‌ها</button></div>
+  <div class="seg"><button class="on" data-t="senti">سنتیمنت</button><button data-t="herd">گله</button><button data-t="rank">برترین‌ها</button><button data-t="whales">نهنگ‌ها</button><button data-t="pos">پوزیشن‌ها</button></div>
   <input id="q" type="search" placeholder="جست‌وجوی نماد (BTC ...)">
   <select id="sd"><option value="">همه‌ی سمت‌ها</option><option value="L">Long</option><option value="S">Short</option></select>
   <select id="mn"><option value="0">همه‌ی حجم‌ها</option><option value="1e5">۱۰۰K و بالاتر</option><option value="1e6">۱M و بالاتر</option><option value="1e7">۱۰M و بالاتر</option></select>
@@ -95,6 +98,9 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
 <div id="wp" class="ov" hidden></div>
 <script>const LANG0=(()=>{try{const q=new URLSearchParams(location.search).get('lang');if(q==='fa'||q==='en')return q;const v=localStorage.getItem('lang');if(v)return v}catch(e){}return (typeof navigator!=='undefined'&&/^fa/i.test(navigator.language||''))?'fa':'en'})();
 let LANG=LANG0;
+const X=(a,b)=>LANG==="en"?b:a;
+const ADMIN=/[?&]admin\b/.test(location.search);
+const tip=t=>{const e=el("span","tip","ⓘ");e.tabIndex=0;e.dataset.tip=t;return e};
 const EN={"نماد": "Symbol", "سمت": "Side", "حجم": "Size", "سود/زیان": "PnL", "اهرم": "Lev.", "نهنگهای دارای پوزیشن": "Whales with positions", " پوزیشن باز": " open positions", "حجم کل پوزیشنها": "Total position size", "تمایل بازار (به دلار)": "Market bias (by $)", "پرحجمترین نماد": "Top symbol by size", "با این فیلترها پوزیشنی پیدا نشد.": "No positions match these filters.", "حساب ": "Account ", "صفحهی نهنگ ←": "Whale page →", "حجم $": "Size $", " پوزیشن · برای جزئیات کلیک کن": " positions · tap for details", "نهنگ": "Whale", "دریافت خودکار داده ممکن نشد؛ نمونه نمایش داده میشود. میتوانی snapshot.json را دستی بارگذاری کنی.": "Automatic data loading failed; showing sample data. You can load snapshot.json manually.", "اصلی (BTC/ETH)": "Majors (BTC/ETH)", "میمکوینها": "Meme coins", "بزرگها و لایه ۱": "Large caps & L1", "سایر آلتکوینها": "Other altcoins", "← بازگشت به لیست": "← Back to list", "کپی آدرس": "Copy address", "کپی شد ✓": "Copied ✓", "ارزش حساب (Perp)": "Account value (perp)", "اهرم مؤثر": "Effective leverage", "حجم ÷ ارزش حساب": "size ÷ account value", "سود/زیان باز (کل)": "Open PnL (total)", "تمایل این نهنگ": "This whale's bias", "خلاصهی هوشمند": "Smart summary", "روز": "Day", "هفته": "Week", "ماه": "Month", "کل": "All-time", "عملکرد (سود و بازده)": "Performance (PnL & ROI)", "تمرکز پرتفو بر اساس دسته": "Portfolio concentration by category", "با گله": "With herd", "خلاف گله": "Against herd", "همهی پوزیشنها": "All positions", "سهم": "Share", "فاصله تا Liq": "Dist. to Liq", "نسبت به گله": "vs. herd", "قیمت Mark از تقسیم حجم بر اندازهی پوزیشن برآورد شده و فاصله تا Liq تقریبی است (در مارجین کراس، لیکویید شدن به کل حساب بستگی دارد). این صفحه توصیهی مالی نیست.": "Mark price is estimated as size ÷ position quantity and distance to Liq is approximate (in cross margin, liquidation depends on the whole account). This page is not financial advice.", "نمونه": "Sample", "اینها بخشی از دادهی اجرای واقعی قبلی توست. فایل snapshot.json را بارگذاری کن تا دادهی خودت نمایش داده شود.": "This is part of real data from an earlier run. Load snapshot.json to see your own data.", "آخرین بهروزرسانی: ": "Last update: ", " دقیقه پیش": " min ago", "دادهی زنده از جمعآوری خودکار (هر چند دقیقه بهروز میشود)": "Live data from automatic collection (updates every few minutes)", "دادهی بارگذاریشده از فایل snapshot.json": "Data loaded from snapshot.json", "فایل خوانده نشد. مطمئن شو snapshot.json خروجی whale_probe2.py است.": "Could not read the file. Make sure it is a snapshot.json produced by the collector.", "وال سونار": "On-chain whale tracker", "بارگذاری snapshot.json": "Load snapshot.json", "گله": "Herd", "نهنگها": "Whales", "پوزیشنها": "Positions", "همهی سمتها": "All sides", "همهی حجمها": "All sizes", "۱۰۰K و بالاتر": "100K and above", "۱M و بالاتر": "1M and above", "۱۰M و بالاتر": "10M and above", "جستوجوی نماد (BTC ...)": "Search symbol (BTC ...)", "این پنل فقط اطلاعات نمایش میدهد و توصیهی مالی نیست. دادهها از API عمومی Hyperliquid گرفته میشود.": "This panel only displays information and is not financial advice. Data comes from the public Hyperliquid API."};
 const TR=s=>LANG==='en'?(EN[s.replace(/\u200c/g,'')]||s):s;
 
@@ -118,7 +124,7 @@ const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=nu
 const M=v=>{if(v==null)return"-";const a=Math.abs(v);if(a<1e3)return"<1K";return a>=1e6?(v/1e6).toFixed(2)+"M":Math.round(v/1e3)+"K"};
 const P=v=>v==null?"-":v>=100?v.toLocaleString("en",{maximumFractionDigits:2}):v.toFixed(4);
 let D=SAMPLE.map(w=>({label:w[0],acct:w[1],pos:w[2].map(p=>({coin:p[0],side:p[1],n:p[2],entry:p[3],liq:p[4],upnl:p[5],lev:p[6]}))}));
-let meta={sample:true,time:null},tab="herd";
+let meta={sample:true,time:null},tab="senti";
 function bar(l,s){const b=el("div","bar"),a=el("i"),c=el("i"),t=(l+s)||1;a.style.width=(100*l/t)+"%";a.style.background="var(--g)";c.style.width=(100*s/t)+"%";c.style.background="var(--r)";b.append(a,c);return b}
 function tbl(heads,rows){const w=el("div","tw"),t=el("table"),tr=el("tr");heads.forEach(h=>tr.append(el("th",0,h)));const th=el("thead");th.append(tr);t.append(th);const tb=el("tbody");rows.forEach(r=>{const tr=el("tr");r.forEach(c=>{const td=el("td",c[1]||"",c[0]);if(c[2])td.append(c[2]);tr.append(td)});tb.append(tr)});t.append(tb);w.append(t);return w}
 function flat(){const q=$("#q").value.trim().toUpperCase(),sd=$("#sd").value,mn=+$("#mn").value,o=[];D.forEach(w=>w.pos.forEach(p=>{if(p.n>=mn&&(!q||p.coin.toUpperCase().includes(q))&&(!sd||p.side===sd))o.push({...p,w:w.label,acct:w.acct})}));return o.sort((a,b)=>b.n-a.n)}
@@ -127,17 +133,17 @@ const PH=()=>[TR("نماد"),TR("سمت"),TR("حجم"),"Entry","Liq",TR("سود/
 function gauge(p){const a=Math.PI*(1-p),x=60+50*Math.cos(a),y=60-50*Math.sin(a),f=(c,d)=>`<path d="${d}" fill="none" stroke="${c}" stroke-width="10" stroke-linecap="round"/>`;
   return `<svg viewBox="0 0 120 68" width="132">${f("var(--r)","M10 60A50 50 0 0 1 110 60")}${p>.01?f("var(--g)",`M10 60A50 50 0 0 1 ${x.toFixed(1)} ${y.toFixed(1)}`):""}</svg>`}
 function render(){
-  const F=flat(),v=$("#view");v.replaceChildren();
+  const F=flat(),v=$("#view");v.replaceChildren();["#q","#sd","#mn"].forEach(z=>{$(z).style.display=(tab==="senti"||tab==="rank")?"none":""});
   const L=F.filter(p=>p.side==="L").reduce((s,p)=>s+p.n,0),S=F.filter(p=>p.side==="S").reduce((s,p)=>s+p.n,0),T=(L+S)||1;
   const cards=$("#cards");cards.replaceChildren();
-  const card=(k,val,sub,extra)=>{const c=el("div","card");c.append(el("span","mu",k),el("b",0,val));if(sub)c.append(el("small",0,sub));if(extra)c.append(extra);cards.append(c)};
+  const card=(k,val,sub,extra,tp)=>{const c=el("div","card"),h=el("span","mu",k);if(tp)h.append(tip(tp));c.append(h,el("b",0,val));if(sub)c.append(el("small",0,sub));if(extra)c.append(extra);cards.append(c)};
   const C={};F.forEach(p=>C[p.coin]=(C[p.coin]||0)+p.n);const tc=Object.entries(C).sort((a,b)=>b[1]-a[1])[0];
-  card(TR("نهنگ‌های دارای پوزیشن"),new Set(F.map(p=>p.w)).size,F.length+TR(" پوزیشن باز"));
-  card(TR("حجم کل پوزیشن‌ها"),"$"+M(L+S),"Long "+M(L)+" · Short "+M(S));
-  const gd=el("div");gd.innerHTML=gauge(L/T);card(TR("تمایل بازار (به دلار)"),Math.round(100*L/T)+"% Long",null,gd);
-  card(TR("پرحجم‌ترین نماد"),tc?tc[0]:"-",tc?"$"+M(tc[1]):"");
+  card(TR("نهنگ‌های دارای پوزیشن"),new Set(F.map(p=>p.w)).size,F.length+TR(" پوزیشن باز"),null,null,X("تعداد نهنگ‌هایی که الان حداقل یک پوزیشن باز دارند (از میان نهنگ‌های ردیابی‌شده).","Tracked whales that currently hold at least one open position."));
+  card(TR("حجم کل پوزیشن‌ها"),"$"+M(L+S),"Long "+M(L)+" · Short "+M(S),null,null,X("مجموع ارزش دلاری همه‌ی پوزیشن‌های باز. چون نهنگ‌ها با اهرم معامله می‌کنند، این عدد از سرمایه‌ی خودشان بزرگ‌تر است.","Total dollar value of all open positions. Whales use leverage, so this is larger than their own capital."));
+  const gd=el("div");gd.innerHTML=gauge(L/T);card(TR("تمایل بازار (به دلار)"),Math.round(100*L/T)+"% Long",null,gd,X("سهم Long از کل حجم پوزیشن‌ها به دلار، فقط برای نهنگ‌های همین فیلتر. شاخص کلی در تب سنتیمنت است.","Long share of total position size in dollars, for the current filter only. See the Sentiment tab for the overall index."));
+  card(TR("پرحجم‌ترین نماد"),tc?tc[0]:"-",tc?"$"+M(tc[1]):"",null,null,X("نمادی که بیشترین حجم پوزیشن نهنگ‌ها روی آن است.","The symbol with the largest total whale position size."));
   if(!F.length){v.append(el("div","note",TR("با این فیلترها پوزیشنی پیدا نشد.")));return}
-  if(tab==="herd"){
+  if(tab==="senti"){sentiView(v)}else if(tab==="rank"){rankView(v)}else if(tab==="herd"){
     const H={};F.forEach(p=>{const h=H[p.coin]||(H[p.coin]={l:0,s:0,nl:0,ns:0,mx:0});if(p.side==="L"){h.l+=p.n;h.nl++}else{h.s+=p.n;h.ns++}h.mx=Math.max(h.mx,p.n)});
     const rows=Object.entries(H).sort((a,b)=>(b[1].l+b[1].s)-(a[1].l+a[1].s)).slice(0,20),mx=Math.max(...rows.map(r=>Math.max(r[1].l,r[1].s)))||1;
     const box=el("div","panel bf"),hd=el("div","bfh");hd.append(el("span","r","◀ Short"),el("span","mu",TR("نماد")),el("span","g","Long ▶"));box.append(hd);
@@ -188,10 +194,10 @@ function openW(label,keep){
   tt.append(el("h2",0,label));
   if(w.addr){const a=el("div","addr",w.addr),cp=el("button","btn",TR("کپی آدرس"));cp.onclick=()=>{try{navigator.clipboard.writeText(w.addr);cp.textContent=TR("کپی شد ✓")}catch(e){}};tt.append(a,cp)}
   hd.append(av,tt,el("span","tag "+(L>=S?"g":"r"),L>=S?"Long-heavy":"Short-heavy"));wrap.append(hd);
-  const cards=el("div","cards"),card=(k,v,sub,cl)=>{const c=el("div","card");c.append(el("span","mu",k),el("b",cl||0,v));if(sub)c.append(el("small",0,sub));cards.append(c)};
-  card(TR("ارزش حساب (Perp)"),"$"+M(w.acct));card(TR("حجم کل پوزیشن‌ها"),"$"+M(tot),ps.length+TR(" پوزیشن باز"));
-  card(TR("اهرم مؤثر"),w.acct>0?(tot/w.acct).toFixed(1)+"x":"-",TR("حجم ÷ ارزش حساب"));card(TR("سود/زیان باز (کل)"),(up>=0?"+":"")+M(up),null,up>=0?"g":"r");
-  const g=el("div");g.innerHTML=gauge(L/tot);card(TR("تمایل این نهنگ"),Math.round(100*L/tot)+"% Long");cards.lastChild.append(g);wrap.append(cards);
+  const cards=el("div","cards"),card=(k,v,sub,cl,tp)=>{const c=el("div","card"),h=el("span","mu",k);if(tp)h.append(tip(tp));c.append(h,el("b",cl||0,v));if(sub)c.append(el("small",0,sub));cards.append(c)};
+  card(TR("ارزش حساب (Perp)"),"$"+M(w.acct),null,null,X("سرمایه‌ی واقعی نهنگ در حساب معاملات آتی (Perp): موجودی به‌اضافه‌ی سود/زیان باز. این «حجم معاملات» نیست؛ نهنگ با اهرم می‌تواند پوزیشن‌هایی چند برابر این عدد باز کند.","The whale’s actual capital in its perp account: balance plus open PnL. It is not trading volume; with leverage a whale can hold positions several times this amount."));card(TR("حجم کل پوزیشن‌ها"),"$"+M(tot),ps.length+TR(" پوزیشن باز"),null,X("مجموع ارزش دلاری همه‌ی پوزیشن‌های باز این نهنگ. با اهرم می‌تواند از ارزش حساب بزرگ‌تر باشد.","Total dollar value of all this whale’s open positions. With leverage it can exceed the account value."));
+  card(TR("اهرم مؤثر"),w.acct>0?(tot/w.acct).toFixed(1)+"x":"-",TR("حجم ÷ ارزش حساب"),null,X("حجم کل پوزیشن‌ها ÷ ارزش حساب. مثلاً 4.6x یعنی به‌ازای هر ۱ دلار سرمایه، ۴٫۶ دلار پوزیشن باز است؛ پس حدود ۲۲٪ حرکت قیمت خلاف جهت (۱÷۴٫۶) تقریباً کل ارزش حساب را از بین می‌برد. این با اهرم تنظیم‌شده‌ی هر پوزیشن (ستون «اهرم») فرق دارد.","Total position size ÷ account value. E.g. 4.6x means $4.6 of positions per $1 of capital, so a ~22% move against all positions (1÷4.6) would roughly wipe out the account. This differs from the per-position leverage setting (Lev. column)."));card(TR("سود/زیان باز (کل)"),(up>=0?"+":"")+M(up),null,up>=0?"g":"r",X("سود/زیان تحقق‌نیافته‌ی پوزیشن‌های باز؛ تا وقتی پوزیشن بسته نشده قطعی نیست.","Unrealized PnL of open positions; not final until the positions are closed."));
+  const g=el("div");g.innerHTML=gauge(L/tot);card(TR("تمایل این نهنگ"),Math.round(100*L/tot)+"% Long",null,null,X("سهم Long از حجم پوزیشن‌های این نهنگ.","Long share of this whale’s position size."));cards.lastChild.append(g);wrap.append(cards);
   // خلاصه‌ی هوشمند
   const top=ps[0],near=ps.filter(p=>p.dist!=null).sort((a,b)=>a.dist-b.dist)[0],opp=ps.filter(p=>!p.same).reduce((s,p)=>s+p.n,0),ins=el("ul","ins");
   (()=>{const f=LANG!=="en",LG=(a,b)=>f?a:b,pc=x=>Math.round(100*x/tot),sd=x=>x==="L"?"Long":"Short",pt=f?"٪":"%",
@@ -222,6 +228,9 @@ function openW(label,keep){
 }
 const P_=v=>P(v);
 function applyStatic(){
+  const xs=(sel,a,b)=>{const e=document.querySelector(sel);if(e)e.textContent=X(a,b)};
+  xs('[data-t="senti"]',"سنتیمنت","Sentiment");xs('[data-t="rank"]',"برترین‌ها","Top performers");
+  const lb=document.querySelector('label[for="f"]');if(lb)lb.style.display=ADMIN?"":"none";
   const R=document.documentElement;R.lang=LANG;R.dir=LANG==="en"?"ltr":"rtl";document.title="MAHQuant Whale Sonar";
   const set=(sel,fa,i)=>{const e=i==null?document.querySelector(sel):document.querySelectorAll(sel)[i];if(e)e.textContent=TR(fa)};
   set(".logo .mu","وال سونار");set('label[for="f"]',"بارگذاری snapshot.json");
@@ -229,10 +238,47 @@ function applyStatic(){
   set("#sd option","همه‌ی سمت‌ها",0);set("#mn option","همه‌ی حجم‌ها",0);set("#mn option","۱۰۰K و بالاتر",1);set("#mn option","۱M و بالاتر",2);set("#mn option","۱۰M و بالاتر",3);
   const q=document.querySelector("#q");if(q)q.placeholder=TR("جست‌وجوی نماد (BTC ...)");
   set("footer","این پنل فقط اطلاعات نمایش می‌دهد و توصیه‌ی مالی نیست. داده‌ها از API عمومی Hyperliquid گرفته می‌شود.");
-  const f=document.querySelector("footer");if(f)f.textContent+=" · MAHQuant · v0.6";
+  const f=document.querySelector("footer");if(f)f.textContent+=" · MAHQuant · v0.7";
   const b=document.querySelector("#lg");if(b)b.textContent=LANG==="en"?"فارسی":"EN";
 }
 function setLang(){LANG=LANG==="en"?"fa":"en";try{localStorage.setItem("lang",LANG)}catch(e){}applyStatic();status();render();if(curW)openW(curW,1)}
+function senti(list){let L=0,S=0,nl=0,ns=0;list.forEach(w=>{const l=w.pos.reduce((s,p)=>s+(p.side==="L"?p.n:0),0),q=w.pos.reduce((s,p)=>s+(p.side==="S"?p.n:0),0);L+=l;S+=q;if(l>q)nl++;else if(q>l)ns++});const nb=(L-S)/((L+S)||1),cb=(nl-ns)/((nl+ns)||1);return{L,S,nl,ns,idx:Math.round(50+50*(0.6*nb+0.4*cb))}}
+const sLab=i=>i<20?X("نزولی شدید","Strongly bearish"):i<40?X("نزولی","Bearish"):i<60?X("خنثی","Neutral"):i<80?X("صعودی","Bullish"):X("صعودی شدید","Strongly bullish");
+const sCol=i=>i<40?"r":i>60?"g":"mu";
+function sentiView(v){
+  const all=senti(D),top=D.filter(w=>w.perf&&w.perf.month&&w.perf.month.pnl!=null).sort((a,b)=>b.perf.month.pnl-a.perf.month.pnl).slice(0,20),sm=top.length>=5?senti(top):null,g=el("div","cards");
+  const mk=(title,s,tp,sub)=>{const c=el("div","card"),h=el("span","mu",title);h.append(tip(tp));const d=el("div");d.innerHTML=gauge(s.idx/100);c.append(h,el("b",sCol(s.idx),s.idx+" · "+sLab(s.idx)),d,el("small",0,sub));g.append(c)};
+  const sub=s=>X(Math.round(100*s.L/((s.L+s.S)||1))+"٪ حجم Long · "+s.nl+" نهنگ Long-heavy در برابر "+s.ns+" Short-heavy",Math.round(100*s.L/((s.L+s.S)||1))+"% of size Long · "+s.nl+" Long-heavy vs "+s.ns+" Short-heavy whales");
+  mk(X("شاخص سنتیمنت کل نهنگ‌ها","Overall whale sentiment"),all,X("ترکیب ۶۰٪ سهم Long در برابر Short به دلار و ۴۰٪ سهم نهنگ‌هایی که بیشتر Long یا Short هستند. ۰ = کاملاً Short، ۵۰ = خنثی، ۱۰۰ = کاملاً Long. فقط وضعیت نهنگ‌ها را نشان می‌دهد و توصیه‌ی معامله نیست.","60% dollar-weighted Long vs Short plus 40% share of whales that are net Long vs Short. 0 = fully Short, 50 = neutral, 100 = fully Long. It describes whale positioning only and is not trading advice."),sub(all));
+  if(sm)mk(X("نهنگ‌های برتر (۲۰ سودآور ماه اخیر)","Top performers (best 20 this month)"),sm,X("همان شاخص، فقط برای ۲۰ نهنگی که در ماه اخیر بیشترین سود دلاری را داشته‌اند.","The same index, computed only for the 20 whales with the highest 30-day profit."),sub(sm));
+  v.append(g);
+  const ins=el("ul","ins"),add=t=>ins.append(el("li",0,t)),pt=X("٪","%");
+  add(X("شاخص کل ","Overall index ")+all.idx+" ("+sLab(all.idx)+")"+X("؛ ","; ")+X(all.nl+" نهنگ بیشتر Long و "+all.ns+" نهنگ بیشتر Short هستند.",all.nl+" whales lean Long and "+all.ns+" lean Short."));
+  if(sm){const d=sm.idx-all.idx;add(Math.abs(d)<10?X("نهنگ‌های برتر ماه تقریباً هم‌جهت با کل نهنگ‌ها هستند.","Top performers are broadly aligned with all whales."):X("نهنگ‌های برتر ماه "+(d>0?"صعودی‌تر":"نزولی‌تر")+" از کل نهنگ‌ها هستند ("+sm.idx+" در برابر "+all.idx+").","Top performers are "+(d>0?"more bullish":"more bearish")+" than all whales ("+sm.idx+" vs "+all.idx+")."))}
+  const cs=c=>{const a=D.filter(w=>w.pos.some(p=>p.coin===c));const l=a.filter(w=>w.pos.some(p=>p.coin===c&&p.side==="L")).length;return{n:a.length,l,s:a.length-l}};
+  const b=cs("BTC");if(b.n)add(X(Math.round(100*b.s/b.n)+"٪ نهنگ‌هایی که روی BTC پوزیشن دارند Short هستند ("+b.s+" از "+b.n+").",Math.round(100*b.s/b.n)+"% of whales holding BTC are Short ("+b.s+" of "+b.n+")."));
+  const pn=el("div","panel");pn.append(ins);v.append(el("div","sec",X("خلاصه‌ی سنتیمنت","Sentiment summary")),pn);
+  const row=(name,l,q,nl,ns)=>{const r=el("div","cr");r.append(el("b",0,name),bar(l,q),el("span","mu",nl+"↑ "+ns+"↓ · "+Math.round(100*l/((l+q)||1))+pt+" Long"));return r};
+  const cp=el("div","panel"),H={};D.forEach(w=>w.pos.forEach(p=>{const h=H[p.coin]||(H[p.coin]={l:0,s:0,nl:0,ns:0});if(p.side==="L"){h.l+=p.n;h.nl++}else{h.s+=p.n;h.ns++}}));
+  Object.entries(H).sort((a,b)=>(b[1].l+b[1].s)-(a[1].l+a[1].s)).slice(0,6).forEach(([c,h])=>cp.append(row(c,h.l,h.s,h.nl,h.ns)));
+  v.append(el("div","sec",X("سنتیمنت کوین‌های اصلی (بر اساس حجم)","Sentiment by top symbols")),cp);
+  const K={};D.forEach(w=>w.pos.forEach(p=>{const k=catOf(p.coin),h=K[k]||(K[k]={l:0,s:0,nl:0,ns:0});if(p.side==="L"){h.l+=p.n;h.nl++}else{h.s+=p.n;h.ns++}}));
+  const kp=el("div","panel");Object.entries(K).sort((a,b)=>(b[1].l+b[1].s)-(a[1].l+a[1].s)).forEach(([k,h])=>kp.append(row(TR(k),h.l,h.s,h.nl,h.ns)));
+  v.append(el("div","sec",X("سنتیمنت بر اساس دسته","Sentiment by category")),kp);
+}
+let rk={p:"month",m:"pnl",a:0};
+function rankView(v){
+  const sel=(opts,cur,fn)=>{const s=el("select");opts.forEach(([val,l])=>{const o=el("option",0,l);o.value=val;if(String(val)===String(cur))o.selected=true;s.append(o)});s.onchange=()=>{fn(s.value);render()};return s};
+  const ct=el("div","ctl");
+  ct.append(sel([["day",X("امروز","Day")],["week",X("هفته","Week")],["month",X("ماه","Month")],["allTime",X("کل دوره","All-time")]],rk.p,x=>rk.p=x),sel([["pnl",X("بر اساس سود دلاری","By profit ($)")],["roi",X("بر اساس بازده (ROI)","By ROI")]],rk.m,x=>rk.m=x),sel([["0",X("همه‌ی حساب‌ها","All accounts")],["1e6",X("حساب ≥ 1M","Account ≥ 1M")],["1e7",X("حساب ≥ 10M","Account ≥ 10M")]],rk.a,x=>rk.a=x));
+  v.append(ct);
+  const rows=D.filter(w=>w.perf&&w.perf[rk.p]&&w.perf[rk.p][rk.m]!=null&&(w.acct||0)>=+rk.a).sort((a,b)=>b.perf[rk.p][rk.m]-a.perf[rk.p][rk.m]).slice(0,50).map((w,i)=>{
+    const x=w.perf[rk.p],l=w.pos.reduce((s,p)=>s+(p.side==="L"?p.n:0),0),q=w.pos.reduce((s,p)=>s+(p.side==="S"?p.n:0),0),a=el("a","lk",w.label);a.onclick=()=>openW(w.label);
+    return[[String(i+1),"num"],["","",a],[(x.pnl>=0?"+":"")+M(x.pnl),"num "+(x.pnl>=0?"g":"r")],[x.roi==null?"-":(x.roi*100).toFixed(1)+"%","num "+(x.roi>=0?"g":"r")],[M(x.vlm),"num"],[M(w.acct),"num"],[l>=q?"Long":"Short",l>=q?"g":"r"]]});
+  if(!rows.length){v.append(el("div","note",X("داده‌ی عملکرد در دسترس نیست.","Performance data is not available.")));return}
+  v.append(tbl(["#",X("نهنگ","Whale"),X("سود/زیان","PnL"),"ROI",X("حجم معاملات","Volume"),X("ارزش حساب","Account"),X("جهت فعلی","Current bias")],rows),el("footer",0,X("بازده‌ی حساب‌های کوچک ممکن است گمراه‌کننده باشد؛ برای مقایسه‌ی عادلانه‌تر حداقل ارزش حساب را انتخاب کن. عملکرد گذشته تضمین آینده نیست.","ROI on small accounts can be misleading; choose a minimum account value for a fairer comparison. Past performance does not guarantee future results.")));
+}
+
 function status(){
   const s=$("#st"),a=$("#age");
   if(meta.sample){s.textContent=TR("نمونه");s.className="badge ac";a.textContent="";$("#msg").textContent=TR("این‌ها بخشی از داده‌ی اجرای واقعی قبلی توست. فایل snapshot.json را بارگذاری کن تا داده‌ی خودت نمایش داده شود.");return}
