@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 
 LEADERBOARD_URL = "https://stats-data.hyperliquid.xyz/Mainnet/leaderboard"
 INFO_URL = "https://api.hyperliquid.xyz/info"
-USER_AGENT = "Mozilla/5.0 (WhaleSonarCollector/0.3)"
+USER_AGENT = "Mozilla/5.0 (WhaleSonarCollector/0.4)"
 
 
 def http_json(url, payload=None, timeout=30, retries=3):
@@ -126,10 +126,11 @@ def fetch_positions(address):
 
 def main():
     ap = argparse.ArgumentParser(description="Whale Sonar collector")
-    ap.add_argument("--candidates", type=int, default=300, help="leaderboard accounts to scan")
-    ap.add_argument("--keep", type=int, default=60, help="max whales kept in the snapshot")
+    ap.add_argument("--candidates", type=int, default=500, help="leaderboard accounts to scan (largest accounts)")
+    ap.add_argument("--by-pnl", type=int, default=300, help="extra candidates: best 30-day profit")
+    ap.add_argument("--keep", type=int, default=200, help="max whales kept in the snapshot")
     ap.add_argument("--min-board-value", type=float, default=500_000)
-    ap.add_argument("--min-notional", type=float, default=500_000)
+    ap.add_argument("--min-notional", type=float, default=300_000)
     ap.add_argument("--rps", type=float, default=6.0, help="max requests per second (6 = ~720 of 1200 weight/min)")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--min-ok", type=int, default=100, help="fail if fewer accounts were scanned OK")
@@ -142,6 +143,10 @@ def main():
     pool = [w for w in board if w["address"] and w["board_account_value"] >= args.min_board_value]
     pool.sort(key=lambda w: w["board_account_value"], reverse=True)
     cands = pool[: args.candidates]
+    have = {w["address"] for w in cands}
+    month = lambda w: (w["perf"].get("month") or {}).get("pnl") or 0
+    extra = sorted((w for w in board if w["address"] and w["address"] not in have and month(w) > 0), key=month, reverse=True)
+    cands += extra[: args.by_pnl]
 
     limiter = RateLimiter(1.0 / args.rps)
 
