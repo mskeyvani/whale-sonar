@@ -62,6 +62,13 @@ tbody tr:hover{background:var(--s2)}tr:last-child td{border-bottom:0}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .chip{font-size:12px;padding:2px 9px;border-radius:8px;background:var(--s2);border:1px solid var(--bd);direction:ltr}
 footer{color:var(--mu);margin-top:18px;font-size:12px}
+[hidden]{display:none!important}
+.ov{position:fixed;inset:0;z-index:20;background:var(--bg);overflow:auto;padding-top:env(safe-area-inset-top,0px)}
+.hd{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:12px 0}.hd h2{margin:0;direction:ltr}
+.addr{direction:ltr;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--mu);word-break:break-all}
+.sec{margin:18px 0 8px;font-size:15px;font-weight:700}
+.ins{margin:0;padding:12px 28px 12px 14px;line-height:2}
+.cr{display:grid;grid-template-columns:130px 1fr auto;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bd)}.cr:last-child{border:0}
 </style>
 </head>
 <body>
@@ -83,6 +90,7 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
 <div id="view"></div>
 <footer>این پنل فقط اطلاعات نمایش می‌دهد و توصیه‌ی مالی نیست. داده‌ها از API عمومی Hyperliquid گرفته می‌شود.</footer>
 </div>
+<div id="wp" class="ov" hidden></div>
 <script>
 // [label, perp account value, [coin, side, notional, entry, liq, uPnL, leverage]]
 const SAMPLE=[
@@ -139,7 +147,7 @@ function render(){
       const l=tot(ps.filter(p=>p.side==="L")),s=tot(ps.filter(p=>p.side==="S")),d=el("details","wc"),sm=el("summary"),top=el("div","wt"),av=el("span","av",w.replace(/^0x/,"").slice(0,2).toUpperCase()),nm=el("span","nm"),ch=el("div","chips"),wm=el("div","wm");
       av.style.background="hsl("+([...w].reduce((a,c)=>a+c.charCodeAt(0),0)*7%360)+" 55% 45%)";
       nm.append(el("b",0,w),el("small","mu","حساب "+M(ps[0].acct)));
-      top.append(av,nm,el("span","tag "+(l>=s?"g":"r"),l>=s?"Long-heavy":"Short-heavy"));
+      const ob=el("button","btn","صفحه‌ی نهنگ ←");ob.onclick=e=>{e.preventDefault();e.stopPropagation();openW(w)};top.append(av,nm,el("span","tag "+(l>=s?"g":"r"),l>=s?"Long-heavy":"Short-heavy"),ob);
       wm.append(el("span",0,"حجم $"+M(l+s)),el("span","mu",ps.length+" پوزیشن · برای جزئیات کلیک کن"));
       ps.slice(0,3).forEach(p=>ch.append(el("span","chip "+(p.side==="L"?"g":"r"),p.coin+" "+M(p.n))));
       sm.append(top,bar(l,s),wm,ch);d.append(sm,tbl(PH,ps.map(p=>posRow(p,false))));grid.append(d)});
@@ -149,12 +157,52 @@ function render(){
   }
 }
 const DATA_URL="https://raw.githubusercontent.com/mskeyvani/whale-sonar/data/data.json";
-function mapSnap(s){return (s.whales||[]).map(w=>({label:w.name||(String(w.address).slice(0,6)+".."+String(w.address).slice(-4)),acct:w.account_value,pos:(w.positions||[]).map(p=>({coin:String(p.coin),side:p.side==="LONG"?"L":"S",n:+p.notional||0,entry:p.entry,liq:p.liq,upnl:p.upnl,lev:p.leverage}))}))}
+function mapSnap(s){return (s.whales||[]).map(w=>({label:w.name||(String(w.address).slice(0,6)+".."+String(w.address).slice(-4)),addr:w.address,perf:w.perf,acct:w.account_value,pos:(w.positions||[]).map(p=>({coin:String(p.coin),side:p.side==="LONG"?"L":"S",n:+p.notional||0,size:p.size,entry:p.entry,liq:p.liq,upnl:p.upnl,lev:p.leverage}))}))}
 async function pull(){
   try{const r=await fetch(DATA_URL+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error(r.status);const j=await r.json();
-    D=mapSnap(j);meta={sample:false,live:true,time:Date.parse(j.generated_at)||Date.now()};status();render();}
+    D=mapSnap(j);meta={sample:false,live:true,time:Date.parse(j.generated_at)||Date.now()};status();render();openHash();if(curW)openW(curW,1)}
   catch(e){if(meta.sample)$("#msg").textContent="دریافت خودکار داده ممکن نشد؛ نمونه نمایش داده می‌شود. می‌توانی snapshot.json را دستی بارگذاری کنی."}
 }
+
+const CATS=[["اصلی (BTC/ETH)",["BTC","ETH"]],["میم‌کوین‌ها",["DOGE","kPEPE","kSHIB","kBONK","kFLOKI","WIF","FARTCOIN","PENGU","POPCAT","MOODENG","TRUMP","MELANIA","PUMP","USELESS","TURBO","BOME","MEME","GOAT","BRETT","SPX","CASHCAT","PNUT"]],["بزرگ‌ها و لایه ۱",["SOL","BNB","XRP","ADA","TRX","AVAX","DOT","ATOM","NEAR","SUI","APT","LTC","BCH","XLM","HBAR","HYPE"]]];
+const catOf=c=>(CATS.find(x=>x[1].includes(c))||["سایر آلت‌کوین‌ها"])[0];
+let curW=null;
+function closeW(){$("#wp").hidden=true;curW=null;history.replaceState(null,"",location.pathname+location.search)}
+function openHash(){const h=decodeURIComponent(location.hash.slice(1)).toLowerCase();if(!h)return;const w=D.find(x=>x.addr&&x.addr.toLowerCase()===h);if(w)openW(w.label)}
+addEventListener("hashchange",openHash);
+function openW(label,keep){
+  const w=D.find(x=>x.label===label);if(!w)return;
+  const P=$("#wp"),hs={};D.forEach(x=>x.pos.forEach(p=>hs[p.coin]=(hs[p.coin]||0)+(p.side==="L"?p.n:-p.n)));
+  curW=label;P.hidden=false;P.replaceChildren();if(!keep)P.scrollTop=0;if(w.addr&&!keep)history.replaceState(null,"","#"+w.addr);
+  const ps=w.pos.map(p=>{const mk=p.size?p.n/p.size:null;return{...p,mk,dist:p.liq&&mk?Math.abs(p.liq-mk)/mk*100:null,same:(hs[p.coin]>=0)===(p.side==="L")}}).sort((a,b)=>b.n-a.n);
+  const tot=ps.reduce((s,p)=>s+p.n,0)||1,L=ps.filter(p=>p.side==="L").reduce((s,p)=>s+p.n,0),S=tot-L,up=ps.reduce((s,p)=>s+(p.upnl||0),0);
+  const wrap=el("div","wrap"),back=el("button","btn","← بازگشت به لیست");back.onclick=closeW;wrap.append(back);
+  const hd=el("div","hd"),av=el("span","av",label.replace(/^0x/,"").slice(0,2).toUpperCase()),tt=el("div");
+  av.style.background="hsl("+([...label].reduce((a,c)=>a+c.charCodeAt(0),0)*7%360)+" 55% 45%)";
+  tt.append(el("h2",0,label));
+  if(w.addr){const a=el("div","addr",w.addr),cp=el("button","btn","کپی آدرس");cp.onclick=()=>{try{navigator.clipboard.writeText(w.addr);cp.textContent="کپی شد ✓"}catch(e){}};tt.append(a,cp)}
+  hd.append(av,tt,el("span","tag "+(L>=S?"g":"r"),L>=S?"Long-heavy":"Short-heavy"));wrap.append(hd);
+  const cards=el("div","cards"),card=(k,v,sub,cl)=>{const c=el("div","card");c.append(el("span","mu",k),el("b",cl||0,v));if(sub)c.append(el("small",0,sub));cards.append(c)};
+  card("ارزش حساب (Perp)","$"+M(w.acct));card("حجم کل پوزیشن‌ها","$"+M(tot),ps.length+" پوزیشن باز");
+  card("اهرم مؤثر",w.acct>0?(tot/w.acct).toFixed(1)+"x":"-","حجم ÷ ارزش حساب");card("سود/زیان باز (کل)",(up>=0?"+":"")+M(up),null,up>=0?"g":"r");
+  const g=el("div");g.innerHTML=gauge(L/tot);card("تمایل این نهنگ",Math.round(100*L/tot)+"% Long");cards.lastChild.append(g);wrap.append(cards);
+  // خلاصه‌ی هوشمند
+  const top=ps[0],near=ps.filter(p=>p.dist!=null).sort((a,b)=>a.dist-b.dist)[0],opp=ps.filter(p=>!p.same).reduce((s,p)=>s+p.n,0),ins=el("ul","ins");
+  [top&&`بزرگ‌ترین پوزیشن: ${top.coin} ${top.side==="L"?"Long":"Short"} با $${M(top.n)} (${Math.round(100*top.n/tot)}٪ از کل حجم).`,
+   `${Math.round(100*Math.max(L,S)/tot)}٪ حجم این نهنگ ${L>=S?"Long":"Short"} است.`,
+   near&&`نزدیک‌ترین پوزیشن به قیمت لیکویید: ${near.coin} ${near.side==="L"?"Long":"Short"} (فاصله‌ی تقریبی ${near.dist.toFixed(0)}٪).`,
+   `${Math.round(100*opp/tot)}٪ از حجم او خلاف جهت اکثریت نهنگ‌های ردیابی‌شده است.`].filter(Boolean).forEach(t=>ins.append(el("li",0,t)));
+  wrap.append(el("div","sec","خلاصه‌ی هوشمند"),Object.assign(el("div","panel"),{}));wrap.lastChild.append(ins);
+  if(w.perf){const row=el("div","chips");[["day","روز"],["week","هفته"],["month","ماه"],["allTime","کل"]].forEach(([k,f])=>{const x=w.perf[k];if(x&&x.pnl!=null)row.append(el("span","chip "+(x.pnl>=0?"g":"r"),f+": "+(x.pnl>=0?"+":"")+M(x.pnl)+(x.roi!=null?" ("+(x.roi*100).toFixed(1)+"%)":"")))});wrap.append(el("div","sec","عملکرد (سود و بازده)"),row)}
+  const C={};ps.forEach(p=>{const c=C[catOf(p.coin)]||(C[catOf(p.coin)]={l:0,s:0});p.side==="L"?c.l+=p.n:c.s+=p.n});
+  const cp=el("div","panel");Object.entries(C).sort((a,b)=>(b[1].l+b[1].s)-(a[1].l+a[1].s)).forEach(([k,c])=>{const r=el("div","cr");r.append(el("b",0,k),bar(c.l,c.s),el("span","mu",M(c.l+c.s)+" · "+Math.round(100*(c.l+c.s)/tot)+"%"));cp.append(r)});
+  wrap.append(el("div","sec","تمرکز پرتفو بر اساس دسته"),cp);
+  const rows=ps.map(p=>[[p.coin,"num"],[p.side==="L"?"Long":"Short",p.side==="L"?"g":"r"],[M(p.n),"num"],[Math.round(100*p.n/tot)+"%","num"],[P_(p.entry),"num"],[P_(p.mk),"num"],[P_(p.liq),"num"],[p.dist==null?"-":p.dist.toFixed(0)+"%","num "+(p.dist==null?"":p.dist<10?"r":p.dist<25?"ac":"g")],[M(p.upnl),"num "+(p.upnl>=0?"g":"r")],[p.lev==null?"-":p.lev+"x","num"],[p.same?"با گله":"خلاف گله",p.same?"mu":"ac"]]);
+  wrap.append(el("div","sec","همه‌ی پوزیشن‌ها"),tbl(["نماد","سمت","حجم","سهم","Entry","Mark","Liq","فاصله تا Liq","سود/زیان","اهرم","نسبت به گله"],rows));
+  wrap.append(el("footer",0,"قیمت Mark از تقسیم حجم بر اندازه‌ی پوزیشن برآورد شده و فاصله تا Liq تقریبی است (در مارجین کراس، لیکویید شدن به کل حساب بستگی دارد). این صفحه توصیه‌ی مالی نیست."));
+  P.append(wrap);
+}
+const P_=v=>P(v);
 function status(){
   const s=$("#st"),a=$("#age");
   if(meta.sample){s.textContent="نمونه";s.className="badge ac";a.textContent="";$("#msg").textContent="این‌ها بخشی از داده‌ی اجرای واقعی قبلی توست. فایل snapshot.json را بارگذاری کن تا داده‌ی خودت نمایش داده شود.";return}
@@ -167,7 +215,7 @@ $("#f").addEventListener("change",e=>{
   const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{
     const s=JSON.parse(r.result);
-    D=(s.whales||[]).map(w=>({label:w.name||(String(w.address).slice(0,6)+".."+String(w.address).slice(-4)),acct:w.account_value,pos:(w.positions||[]).map(p=>({coin:String(p.coin),side:p.side==="LONG"?"L":"S",n:+p.notional||0,entry:p.entry,liq:p.liq,upnl:p.upnl,lev:p.leverage}))}));
+    D=mapSnap(s);
     meta={sample:false,time:Date.parse(s.generated_at)||Date.now()};status();render();
   }catch(err){$("#msg").textContent="فایل خوانده نشد. مطمئن شو snapshot.json خروجی whale_probe2.py است."}};
   r.readAsText(f);
