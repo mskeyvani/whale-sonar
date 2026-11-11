@@ -60,6 +60,7 @@ tbody tr:hover{background:var(--s2)}tr:last-child td{border-bottom:0}
 .tag{font-size:11px;font-weight:700;padding:1px 9px;border-radius:99px;border:1px solid currentColor}
 .wm{display:flex;justify-content:space-between;font-size:13px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip.pf{direction:inherit}
 .chip{font-size:12px;padding:2px 9px;border-radius:8px;background:var(--s2);border:1px solid var(--bd);direction:ltr}
 footer{color:var(--mu);margin-top:18px;font-size:12px}
 [hidden]{display:none!important}
@@ -193,12 +194,24 @@ function openW(label,keep){
   const g=el("div");g.innerHTML=gauge(L/tot);card(TR("تمایل این نهنگ"),Math.round(100*L/tot)+"% Long");cards.lastChild.append(g);wrap.append(cards);
   // خلاصه‌ی هوشمند
   const top=ps[0],near=ps.filter(p=>p.dist!=null).sort((a,b)=>a.dist-b.dist)[0],opp=ps.filter(p=>!p.same).reduce((s,p)=>s+p.n,0),ins=el("ul","ins");
-  (()=>{const sd=x=>x==="L"?"Long":"Short",f=LANG!=="en",pc=Math.round(100*Math.max(L,S)/tot),po=Math.round(100*opp/tot);return [top&&(f?`بزرگ‌ترین پوزیشن: ${top.coin} ${sd(top.side)} با $${M(top.n)} (${Math.round(100*top.n/tot)}٪ از کل حجم).`:`Largest position: ${top.coin} ${sd(top.side)} at $${M(top.n)} (${Math.round(100*top.n/tot)}% of total size).`),
-   f?`${pc}٪ حجم این نهنگ ${L>=S?"Long":"Short"} است.`:`${pc}% of this whale's size is ${L>=S?"Long":"Short"}.`,
-   near&&(f?`نزدیک‌ترین پوزیشن به قیمت لیکویید: ${near.coin} ${sd(near.side)} (فاصله‌ی تقریبی ${near.dist.toFixed(0)}٪).`:`Closest to liquidation: ${near.coin} ${sd(near.side)} (approx. ${near.dist.toFixed(0)}% away).`),
-   f?`${po}٪ از حجم او خلاف جهت اکثریت نهنگ‌های ردیابی‌شده است.`:`${po}% of its size is against the majority of tracked whales.`]})().filter(Boolean).forEach(t=>ins.append(el("li",0,t)));
+  (()=>{const f=LANG!=="en",LG=(a,b)=>f?a:b,pc=x=>Math.round(100*x/tot),sd=x=>x==="L"?"Long":"Short",pt=f?"٪":"%",
+ bw=[...ps].sort((a,b)=>(b.upnl||0)-(a.upnl||0)),win=ps.filter(p=>(p.upnl||0)>0).length,los=ps.filter(p=>(p.upnl||0)<0).length,
+ hi=[...ps].sort((a,b)=>(b.lev||0)-(a.lev||0))[0],wl=ps.reduce((s,p)=>s+(p.lev||0)*p.n,0)/tot,
+ risk=ps.filter(p=>p.dist!=null&&p.dist<25).length,top3=ps.slice(0,3).reduce((s,p)=>s+p.n,0),
+ cc={};ps.forEach(p=>{const k=catOf(p.coin);cc[k]=(cc[k]||0)+p.n});const cat=Object.entries(cc).sort((a,b)=>b[1]-a[1])[0];
+ const al=D.map(x=>x.pos.reduce((s,p)=>s+p.n,0)),sum=al.reduce((a,b)=>a+b,0)||1,rank=al.filter(v=>v>tot*1.000001).length+1;
+ const ag=ps.filter(p=>!p.same).slice(0,4).map(p=>p.coin).join(f?"، ":", ");
+ return [top&&LG(`بزرگ‌ترین پوزیشن: ${top.coin} ${sd(top.side)} با $${M(top.n)} (${pc(top.n)}٪ از کل حجم).`,`Largest position: ${top.coin} ${sd(top.side)} at $${M(top.n)} (${pc(top.n)}% of total size).`),
+  LG(`${Math.round(100*Math.max(L,S)/tot)}٪ حجم این نهنگ ${L>=S?"Long":"Short"} است.`,`${Math.round(100*Math.max(L,S)/tot)}% of this whale's size is ${L>=S?"Long":"Short"}.`),
+  ps.length>3&&LG(`۳ پوزیشن بزرگ ${pc(top3)}٪ از کل حجم را تشکیل می‌دهند.`,`The top 3 positions make up ${pc(top3)}% of total size.`),
+  cat&&LG(`بیشترین تمرکز در دسته‌ی «${TR(cat[0])}» است (${pc(cat[1])}٪).`,`Largest concentration: ${TR(cat[0])} (${pc(cat[1])}%).`),
+  hi&&hi.lev&&LG(`اهرم میانگین وزنی ${wl.toFixed(1)}x است؛ بالاترین اهرم: ${hi.coin} با ${hi.lev}x.`,`Weighted average leverage is ${wl.toFixed(1)}x; highest: ${hi.coin} at ${hi.lev}x.`),
+  ps.length&&LG(`${win} پوزیشن در سود و ${los} پوزیشن در زیان است؛ بیشترین سود: ${bw[0].coin} (${M(bw[0].upnl)})، بیشترین زیان: ${bw[bw.length-1].coin} (${M(bw[bw.length-1].upnl)}).`,`${win} positions in profit and ${los} at a loss; best: ${bw[0].coin} (${M(bw[0].upnl)}), worst: ${bw[bw.length-1].coin} (${M(bw[bw.length-1].upnl)}).`),
+  near&&LG(risk?`${risk} پوزیشن در فاصله‌ی کمتر از ۲۵٪ از قیمت لیکویید است؛ نزدیک‌ترین: ${near.coin} (حدود ${near.dist.toFixed(0)}٪).`:`هیچ پوزیشنی کمتر از ۲۵٪ تا لیکویید فاصله ندارد؛ نزدیک‌ترین: ${near.coin} (حدود ${near.dist.toFixed(0)}٪).`,risk?`${risk} positions are within 25% of liquidation; closest: ${near.coin} (about ${near.dist.toFixed(0)}%).`:`No position is within 25% of liquidation; closest: ${near.coin} (about ${near.dist.toFixed(0)}%).`),
+  LG(`${Math.round(100*opp/tot)}٪ از حجم او خلاف جهت اکثریت نهنگ‌های ردیابی‌شده است${ag?" (مثلاً "+ag+")":""}.`,`${Math.round(100*opp/tot)}% of its size is against the majority of tracked whales${ag?" (e.g. "+ag+")":""}.`),
+  LG(`از نظر حجم رتبه‌ی ${rank} از ${D.length} نهنگ ردیابی‌شده را دارد (${Math.round(100*tot/sum)}٪ از کل حجم نهنگ‌ها).`,`Ranks #${rank} of ${D.length} tracked whales by size (${Math.round(100*tot/sum)}% of all tracked size).`)]})().filter(Boolean).forEach(t=>ins.append(el("li",0,t)));
   wrap.append(el("div","sec",TR("خلاصه‌ی هوشمند")),Object.assign(el("div","panel"),{}));wrap.lastChild.append(ins);
-  if(w.perf){const row=el("div","chips");[["day",TR("روز")],["week",TR("هفته")],["month",TR("ماه")],["allTime",TR("کل")]].forEach(([k,f])=>{const x=w.perf[k];if(x&&x.pnl!=null)row.append(el("span","chip "+(x.pnl>=0?"g":"r"),f+": "+(x.pnl>=0?"+":"")+M(x.pnl)+(x.roi!=null?" ("+(x.roi*100).toFixed(1)+"%)":"")))});wrap.append(el("div","sec",TR("عملکرد (سود و بازده)")),row)}
+  if(w.perf){const row=el("div","chips");[["day",TR("روز")],["week",TR("هفته")],["month",TR("ماه")],["allTime",TR("کل")]].forEach(([k,f])=>{const x=w.perf[k];if(x&&x.pnl!=null)row.append(el("span","chip pf "+(x.pnl>=0?"g":"r"),f+": "+(x.pnl>=0?"+":"")+M(x.pnl)+(x.roi!=null?" ("+(x.roi*100).toFixed(1)+"%)":"")))});wrap.append(el("div","sec",TR("عملکرد (سود و بازده)")),row)}
   const C={};ps.forEach(p=>{const c=C[catOf(p.coin)]||(C[catOf(p.coin)]={l:0,s:0});p.side==="L"?c.l+=p.n:c.s+=p.n});
   const cp=el("div","panel");Object.entries(C).sort((a,b)=>(b[1].l+b[1].s)-(a[1].l+a[1].s)).forEach(([k,c])=>{const r=el("div","cr");r.append(el("b",0,TR(k)),bar(c.l,c.s),el("span","mu",M(c.l+c.s)+" · "+Math.round(100*(c.l+c.s)/tot)+"%"));cp.append(r)});
   wrap.append(el("div","sec",TR("تمرکز پرتفو بر اساس دسته")),cp);
@@ -216,7 +229,7 @@ function applyStatic(){
   set("#sd option","همه‌ی سمت‌ها",0);set("#mn option","همه‌ی حجم‌ها",0);set("#mn option","۱۰۰K و بالاتر",1);set("#mn option","۱M و بالاتر",2);set("#mn option","۱۰M و بالاتر",3);
   const q=document.querySelector("#q");if(q)q.placeholder=TR("جست‌وجوی نماد (BTC ...)");
   set("footer","این پنل فقط اطلاعات نمایش می‌دهد و توصیه‌ی مالی نیست. داده‌ها از API عمومی Hyperliquid گرفته می‌شود.");
-  const f=document.querySelector("footer");if(f)f.textContent+=" · MAHQuant · v0.5";
+  const f=document.querySelector("footer");if(f)f.textContent+=" · MAHQuant · v0.6";
   const b=document.querySelector("#lg");if(b)b.textContent=LANG==="en"?"فارسی":"EN";
 }
 function setLang(){LANG=LANG==="en"?"fa":"en";try{localStorage.setItem("lang",LANG)}catch(e){}applyStatic();status();render();if(curW)openW(curW,1)}
