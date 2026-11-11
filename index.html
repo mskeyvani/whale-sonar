@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Whale Sonar | داشبورد نهنگ‌ها</title>
+<title>MAHQuant Whale Sonar</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap">
 <style>
 :root{--bg:#f3f5f9;--sf:#fff;--s2:#eef2f8;--tx:#0f1722;--mu:#66738a;--bd:#dfe5ee;--g:#0e9f6e;--r:#e0344a;--ac:#3b6cf6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -38,7 +38,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .panel,.tw{background:var(--sf);border:1px solid var(--bd);border-radius:16px}
 .tw{overflow-x:auto;margin-top:10px}
 table{width:100%;border-collapse:collapse;white-space:nowrap}
-th,td{padding:9px 14px;text-align:right;border-bottom:1px solid var(--bd)}
+th,td{padding:9px 14px;text-align:start;border-bottom:1px solid var(--bd)}
 th{color:var(--mu);font-weight:600;font-size:12px;background:var(--s2)}
 td.num{direction:ltr;text-align:left}td.g,td.r{font-weight:700}
 tbody tr:hover{background:var(--s2)}tr:last-child td{border-bottom:0}
@@ -67,14 +67,15 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
 .hd{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:12px 0}.hd h2{margin:0;direction:ltr}
 .addr{direction:ltr;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--mu);word-break:break-all}
 .sec{margin:18px 0 8px;font-size:15px;font-weight:700}
-.ins{margin:0;padding:12px 28px 12px 14px;line-height:2}
+.ins{margin:0;padding:12px 14px;padding-inline-start:30px;line-height:2}
 .cr{display:grid;grid-template-columns:130px 1fr auto;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bd)}.cr:last-child{border:0}
 </style>
 </head>
 <body>
 <div class="top"><div class="wrap">
-  <div class="logo"><span class="mk">🐋</span><b>Whale Sonar</b><span class="mu">داشبورد نهنگ‌ها</span></div>
+  <div class="logo"><span class="mk">🐋</span><b>MAHQuant Whale Sonar</b><span class="mu">داشبورد نهنگ‌ها</span></div>
   <div class="tools"><span id="st" class="badge"></span><span id="age" class="mu"></span>
+  <button id="lg" class="btn" title="Language">EN</button>
   <button id="th" class="btn" title="تغییر تم">◐</button>
   <label class="btn pri" for="f">بارگذاری snapshot.json</label><input id="f" type="file" accept=".json,application/json" hidden></div>
 </div></div>
@@ -91,7 +92,11 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
 <footer>این پنل فقط اطلاعات نمایش می‌دهد و توصیه‌ی مالی نیست. داده‌ها از API عمومی Hyperliquid گرفته می‌شود.</footer>
 </div>
 <div id="wp" class="ov" hidden></div>
-<script>
+<script>const LANG0=(()=>{try{const q=new URLSearchParams(location.search).get('lang');if(q==='fa'||q==='en')return q;const v=localStorage.getItem('lang');if(v)return v}catch(e){}return (typeof navigator!=='undefined'&&/^fa/i.test(navigator.language||''))?'fa':'en'})();
+let LANG=LANG0;
+const EN={"نماد": "Symbol", "سمت": "Side", "حجم": "Size", "سود/زیان": "PnL", "اهرم": "Lev.", "نهنگهای دارای پوزیشن": "Whales with positions", " پوزیشن باز": " open positions", "حجم کل پوزیشنها": "Total position size", "تمایل بازار (به دلار)": "Market bias (by $)", "پرحجمترین نماد": "Top symbol by size", "با این فیلترها پوزیشنی پیدا نشد.": "No positions match these filters.", "حساب ": "Account ", "صفحهی نهنگ ←": "Whale page →", "حجم $": "Size $", " پوزیشن · برای جزئیات کلیک کن": " positions · tap for details", "نهنگ": "Whale", "دریافت خودکار داده ممکن نشد؛ نمونه نمایش داده میشود. میتوانی snapshot.json را دستی بارگذاری کنی.": "Automatic data loading failed; showing sample data. You can load snapshot.json manually.", "اصلی (BTC/ETH)": "Majors (BTC/ETH)", "میمکوینها": "Meme coins", "بزرگها و لایه ۱": "Large caps & L1", "سایر آلتکوینها": "Other altcoins", "← بازگشت به لیست": "← Back to list", "کپی آدرس": "Copy address", "کپی شد ✓": "Copied ✓", "ارزش حساب (Perp)": "Account value (perp)", "اهرم مؤثر": "Effective leverage", "حجم ÷ ارزش حساب": "size ÷ account value", "سود/زیان باز (کل)": "Open PnL (total)", "تمایل این نهنگ": "This whale's bias", "خلاصهی هوشمند": "Smart summary", "روز": "Day", "هفته": "Week", "ماه": "Month", "کل": "All-time", "عملکرد (سود و بازده)": "Performance (PnL & ROI)", "تمرکز پرتفو بر اساس دسته": "Portfolio concentration by category", "با گله": "With herd", "خلاف گله": "Against herd", "همهی پوزیشنها": "All positions", "سهم": "Share", "فاصله تا Liq": "Dist. to Liq", "نسبت به گله": "vs. herd", "قیمت Mark از تقسیم حجم بر اندازهی پوزیشن برآورد شده و فاصله تا Liq تقریبی است (در مارجین کراس، لیکویید شدن به کل حساب بستگی دارد). این صفحه توصیهی مالی نیست.": "Mark price is estimated as size ÷ position quantity and distance to Liq is approximate (in cross margin, liquidation depends on the whole account). This page is not financial advice.", "نمونه": "Sample", "اینها بخشی از دادهی اجرای واقعی قبلی توست. فایل snapshot.json را بارگذاری کن تا دادهی خودت نمایش داده شود.": "This is part of real data from an earlier run. Load snapshot.json to see your own data.", "آخرین بهروزرسانی: ": "Last update: ", " دقیقه پیش": " min ago", "دادهی زنده از جمعآوری خودکار (هر چند دقیقه بهروز میشود)": "Live data from automatic collection (updates every few minutes)", "دادهی بارگذاریشده از فایل snapshot.json": "Data loaded from snapshot.json", "فایل خوانده نشد. مطمئن شو snapshot.json خروجی whale_probe2.py است.": "Could not read the file. Make sure it is a snapshot.json produced by the collector.", "وال سونار": "On-chain whale tracker", "بارگذاری snapshot.json": "Load snapshot.json", "گله": "Herd", "نهنگها": "Whales", "پوزیشنها": "Positions", "همهی سمتها": "All sides", "همهی حجمها": "All sizes", "۱۰۰K و بالاتر": "100K and above", "۱M و بالاتر": "1M and above", "۱۰M و بالاتر": "10M and above", "جستوجوی نماد (BTC ...)": "Search symbol (BTC ...)", "این پنل فقط اطلاعات نمایش میدهد و توصیهی مالی نیست. دادهها از API عمومی Hyperliquid گرفته میشود.": "This panel only displays information and is not financial advice. Data comes from the public Hyperliquid API."};
+const TR=s=>LANG==='en'?(EN[s.replace(/\u200c/g,'')]||s):s;
+
 // [label, perp account value, [coin, side, notional, entry, liq, uPnL, leverage]]
 const SAMPLE=[
 ["0x5b5d..c060",98.77e6,[["BTC","S",176.37e6,76390.2,122336.8,3.5e6,5],["ETH","S",123.75e6,2322.72,4036.79,11.2e6,5],["SOL","S",54.63e6,94.3346,260.92,4.67e6,7],["HYPE","S",47.99e6,75.4377,238.5,108e3,5],["ZEC","S",43.51e6,1478.36,4010.96,10.89e6,3]]],
@@ -117,7 +122,7 @@ function bar(l,s){const b=el("div","bar"),a=el("i"),c=el("i"),t=(l+s)||1;a.style
 function tbl(heads,rows){const w=el("div","tw"),t=el("table"),tr=el("tr");heads.forEach(h=>tr.append(el("th",0,h)));const th=el("thead");th.append(tr);t.append(th);const tb=el("tbody");rows.forEach(r=>{const tr=el("tr");r.forEach(c=>{const td=el("td",c[1]||"",c[0]);if(c[2])td.append(c[2]);tr.append(td)});tb.append(tr)});t.append(tb);w.append(t);return w}
 function flat(){const q=$("#q").value.trim().toUpperCase(),sd=$("#sd").value,mn=+$("#mn").value,o=[];D.forEach(w=>w.pos.forEach(p=>{if(p.n>=mn&&(!q||p.coin.toUpperCase().includes(q))&&(!sd||p.side===sd))o.push({...p,w:w.label,acct:w.acct})}));return o.sort((a,b)=>b.n-a.n)}
 function posRow(p,withW){const c=p.side==="L"?"g":"r";const r=[];if(withW)r.push([p.w,"num"]);r.push([p.coin,"num"],[p.side==="L"?"Long":"Short",c],[M(p.n),"num"],[P(p.entry),"num"],[P(p.liq),"num"],[M(p.upnl),"num "+(p.upnl>=0?"g":"r")],[p.lev==null?"-":p.lev+"x","num"]);return r}
-const PH=["نماد","سمت","حجم","Entry","Liq","سود/زیان","اهرم"];
+const PH=()=>[TR("نماد"),TR("سمت"),TR("حجم"),"Entry","Liq",TR("سود/زیان"),TR("اهرم")];
 function gauge(p){const a=Math.PI*(1-p),x=60+50*Math.cos(a),y=60-50*Math.sin(a),f=(c,d)=>`<path d="${d}" fill="none" stroke="${c}" stroke-width="10" stroke-linecap="round"/>`;
   return `<svg viewBox="0 0 120 68" width="132">${f("var(--r)","M10 60A50 50 0 0 1 110 60")}${p>.01?f("var(--g)",`M10 60A50 50 0 0 1 ${x.toFixed(1)} ${y.toFixed(1)}`):""}</svg>`}
 function render(){
@@ -126,15 +131,15 @@ function render(){
   const cards=$("#cards");cards.replaceChildren();
   const card=(k,val,sub,extra)=>{const c=el("div","card");c.append(el("span","mu",k),el("b",0,val));if(sub)c.append(el("small",0,sub));if(extra)c.append(extra);cards.append(c)};
   const C={};F.forEach(p=>C[p.coin]=(C[p.coin]||0)+p.n);const tc=Object.entries(C).sort((a,b)=>b[1]-a[1])[0];
-  card("نهنگ‌های دارای پوزیشن",new Set(F.map(p=>p.w)).size,F.length+" پوزیشن باز");
-  card("حجم کل پوزیشن‌ها","$"+M(L+S),"Long "+M(L)+" · Short "+M(S));
-  const gd=el("div");gd.innerHTML=gauge(L/T);card("تمایل بازار (به دلار)",Math.round(100*L/T)+"% Long",null,gd);
-  card("پرحجم‌ترین نماد",tc?tc[0]:"-",tc?"$"+M(tc[1]):"");
-  if(!F.length){v.append(el("div","note","با این فیلترها پوزیشنی پیدا نشد."));return}
+  card(TR("نهنگ‌های دارای پوزیشن"),new Set(F.map(p=>p.w)).size,F.length+TR(" پوزیشن باز"));
+  card(TR("حجم کل پوزیشن‌ها"),"$"+M(L+S),"Long "+M(L)+" · Short "+M(S));
+  const gd=el("div");gd.innerHTML=gauge(L/T);card(TR("تمایل بازار (به دلار)"),Math.round(100*L/T)+"% Long",null,gd);
+  card(TR("پرحجم‌ترین نماد"),tc?tc[0]:"-",tc?"$"+M(tc[1]):"");
+  if(!F.length){v.append(el("div","note",TR("با این فیلترها پوزیشنی پیدا نشد.")));return}
   if(tab==="herd"){
     const H={};F.forEach(p=>{const h=H[p.coin]||(H[p.coin]={l:0,s:0,nl:0,ns:0,mx:0});if(p.side==="L"){h.l+=p.n;h.nl++}else{h.s+=p.n;h.ns++}h.mx=Math.max(h.mx,p.n)});
     const rows=Object.entries(H).sort((a,b)=>(b[1].l+b[1].s)-(a[1].l+a[1].s)).slice(0,20),mx=Math.max(...rows.map(r=>Math.max(r[1].l,r[1].s)))||1;
-    const box=el("div","panel bf"),hd=el("div","bfh");hd.append(el("span","r","◀ Short"),el("span","mu","نماد"),el("span","g","Long ▶"));box.append(hd);
+    const box=el("div","panel bf"),hd=el("div","bfh");hd.append(el("span","r","◀ Short"),el("span","mu",TR("نماد")),el("span","g","Long ▶"));box.append(hd);
     rows.forEach(([c,h])=>{const r=el("div","bfr"),s=el("div","side s"),l=el("div","side l"),sb=el("i"),lb=el("i"),m=el("div","mid");
       sb.style.width=(70*h.s/mx)+"%";lb.style.width=(70*h.l/mx)+"%";
       s.append(el("em",0,M(h.s)+" · "+h.ns),sb);l.append(lb,el("em",0,h.nl+" · "+M(h.l)));
@@ -146,14 +151,14 @@ function render(){
     Object.entries(G).sort((a,b)=>tot(b[1])-tot(a[1])).forEach(([w,ps])=>{
       const l=tot(ps.filter(p=>p.side==="L")),s=tot(ps.filter(p=>p.side==="S")),d=el("details","wc"),sm=el("summary"),top=el("div","wt"),av=el("span","av",w.replace(/^0x/,"").slice(0,2).toUpperCase()),nm=el("span","nm"),ch=el("div","chips"),wm=el("div","wm");
       av.style.background="hsl("+([...w].reduce((a,c)=>a+c.charCodeAt(0),0)*7%360)+" 55% 45%)";
-      nm.append(el("b",0,w),el("small","mu","حساب "+M(ps[0].acct)));
-      const ob=el("button","btn","صفحه‌ی نهنگ ←");ob.onclick=e=>{e.preventDefault();e.stopPropagation();openW(w)};top.append(av,nm,el("span","tag "+(l>=s?"g":"r"),l>=s?"Long-heavy":"Short-heavy"),ob);
-      wm.append(el("span",0,"حجم $"+M(l+s)),el("span","mu",ps.length+" پوزیشن · برای جزئیات کلیک کن"));
+      nm.append(el("b",0,w),el("small","mu",TR("حساب ")+M(ps[0].acct)));
+      const ob=el("button","btn",TR("صفحه‌ی نهنگ ←"));ob.onclick=e=>{e.preventDefault();e.stopPropagation();openW(w)};top.append(av,nm,el("span","tag "+(l>=s?"g":"r"),l>=s?"Long-heavy":"Short-heavy"),ob);
+      wm.append(el("span",0,TR("حجم $")+M(l+s)),el("span","mu",ps.length+TR(" پوزیشن · برای جزئیات کلیک کن")));
       ps.slice(0,3).forEach(p=>ch.append(el("span","chip "+(p.side==="L"?"g":"r"),p.coin+" "+M(p.n))));
-      sm.append(top,bar(l,s),wm,ch);d.append(sm,tbl(PH,ps.map(p=>posRow(p,false))));grid.append(d)});
+      sm.append(top,bar(l,s),wm,ch);d.append(sm,tbl(PH(),ps.map(p=>posRow(p,false))));grid.append(d)});
     v.append(grid);
   }else{
-    v.append(tbl(["نهنگ",...PH],F.slice(0,200).map(p=>posRow(p,true))));
+    v.append(tbl([TR("نهنگ"),...PH()],F.slice(0,200).map(p=>posRow(p,true))));
   }
 }
 const DATA_URL="https://raw.githubusercontent.com/mskeyvani/whale-sonar/data/data.json";
@@ -161,7 +166,7 @@ function mapSnap(s){return (s.whales||[]).map(w=>({label:w.name||(String(w.addre
 async function pull(){
   try{const r=await fetch(DATA_URL+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error(r.status);const j=await r.json();
     D=mapSnap(j);meta={sample:false,live:true,time:Date.parse(j.generated_at)||Date.now()};status();render();openHash();if(curW)openW(curW,1)}
-  catch(e){if(meta.sample)$("#msg").textContent="دریافت خودکار داده ممکن نشد؛ نمونه نمایش داده می‌شود. می‌توانی snapshot.json را دستی بارگذاری کنی."}
+  catch(e){if(meta.sample)$("#msg").textContent=TR("دریافت خودکار داده ممکن نشد؛ نمونه نمایش داده می‌شود. می‌توانی snapshot.json را دستی بارگذاری کنی.")}
 }
 
 const CATS=[["اصلی (BTC/ETH)",["BTC","ETH"]],["میم‌کوین‌ها",["DOGE","kPEPE","kSHIB","kBONK","kFLOKI","WIF","FARTCOIN","PENGU","POPCAT","MOODENG","TRUMP","MELANIA","PUMP","USELESS","TURBO","BOME","MEME","GOAT","BRETT","SPX","CASHCAT","PNUT"]],["بزرگ‌ها و لایه ۱",["SOL","BNB","XRP","ADA","TRX","AVAX","DOT","ATOM","NEAR","SUI","APT","LTC","BCH","XLM","HBAR","HYPE"]]];
@@ -176,40 +181,52 @@ function openW(label,keep){
   curW=label;P.hidden=false;P.replaceChildren();if(!keep)P.scrollTop=0;if(w.addr&&!keep)history.replaceState(null,"","#"+w.addr);
   const ps=w.pos.map(p=>{const mk=p.size?p.n/p.size:null;return{...p,mk,dist:p.liq&&mk?Math.abs(p.liq-mk)/mk*100:null,same:(hs[p.coin]>=0)===(p.side==="L")}}).sort((a,b)=>b.n-a.n);
   const tot=ps.reduce((s,p)=>s+p.n,0)||1,L=ps.filter(p=>p.side==="L").reduce((s,p)=>s+p.n,0),S=tot-L,up=ps.reduce((s,p)=>s+(p.upnl||0),0);
-  const wrap=el("div","wrap"),back=el("button","btn","← بازگشت به لیست");back.onclick=closeW;wrap.append(back);
+  const wrap=el("div","wrap"),back=el("button","btn",TR("← بازگشت به لیست"));back.onclick=closeW;wrap.append(back);
   const hd=el("div","hd"),av=el("span","av",label.replace(/^0x/,"").slice(0,2).toUpperCase()),tt=el("div");
   av.style.background="hsl("+([...label].reduce((a,c)=>a+c.charCodeAt(0),0)*7%360)+" 55% 45%)";
   tt.append(el("h2",0,label));
-  if(w.addr){const a=el("div","addr",w.addr),cp=el("button","btn","کپی آدرس");cp.onclick=()=>{try{navigator.clipboard.writeText(w.addr);cp.textContent="کپی شد ✓"}catch(e){}};tt.append(a,cp)}
+  if(w.addr){const a=el("div","addr",w.addr),cp=el("button","btn",TR("کپی آدرس"));cp.onclick=()=>{try{navigator.clipboard.writeText(w.addr);cp.textContent=TR("کپی شد ✓")}catch(e){}};tt.append(a,cp)}
   hd.append(av,tt,el("span","tag "+(L>=S?"g":"r"),L>=S?"Long-heavy":"Short-heavy"));wrap.append(hd);
   const cards=el("div","cards"),card=(k,v,sub,cl)=>{const c=el("div","card");c.append(el("span","mu",k),el("b",cl||0,v));if(sub)c.append(el("small",0,sub));cards.append(c)};
-  card("ارزش حساب (Perp)","$"+M(w.acct));card("حجم کل پوزیشن‌ها","$"+M(tot),ps.length+" پوزیشن باز");
-  card("اهرم مؤثر",w.acct>0?(tot/w.acct).toFixed(1)+"x":"-","حجم ÷ ارزش حساب");card("سود/زیان باز (کل)",(up>=0?"+":"")+M(up),null,up>=0?"g":"r");
-  const g=el("div");g.innerHTML=gauge(L/tot);card("تمایل این نهنگ",Math.round(100*L/tot)+"% Long");cards.lastChild.append(g);wrap.append(cards);
+  card(TR("ارزش حساب (Perp)"),"$"+M(w.acct));card(TR("حجم کل پوزیشن‌ها"),"$"+M(tot),ps.length+TR(" پوزیشن باز"));
+  card(TR("اهرم مؤثر"),w.acct>0?(tot/w.acct).toFixed(1)+"x":"-",TR("حجم ÷ ارزش حساب"));card(TR("سود/زیان باز (کل)"),(up>=0?"+":"")+M(up),null,up>=0?"g":"r");
+  const g=el("div");g.innerHTML=gauge(L/tot);card(TR("تمایل این نهنگ"),Math.round(100*L/tot)+"% Long");cards.lastChild.append(g);wrap.append(cards);
   // خلاصه‌ی هوشمند
   const top=ps[0],near=ps.filter(p=>p.dist!=null).sort((a,b)=>a.dist-b.dist)[0],opp=ps.filter(p=>!p.same).reduce((s,p)=>s+p.n,0),ins=el("ul","ins");
-  [top&&`بزرگ‌ترین پوزیشن: ${top.coin} ${top.side==="L"?"Long":"Short"} با $${M(top.n)} (${Math.round(100*top.n/tot)}٪ از کل حجم).`,
-   `${Math.round(100*Math.max(L,S)/tot)}٪ حجم این نهنگ ${L>=S?"Long":"Short"} است.`,
-   near&&`نزدیک‌ترین پوزیشن به قیمت لیکویید: ${near.coin} ${near.side==="L"?"Long":"Short"} (فاصله‌ی تقریبی ${near.dist.toFixed(0)}٪).`,
-   `${Math.round(100*opp/tot)}٪ از حجم او خلاف جهت اکثریت نهنگ‌های ردیابی‌شده است.`].filter(Boolean).forEach(t=>ins.append(el("li",0,t)));
-  wrap.append(el("div","sec","خلاصه‌ی هوشمند"),Object.assign(el("div","panel"),{}));wrap.lastChild.append(ins);
-  if(w.perf){const row=el("div","chips");[["day","روز"],["week","هفته"],["month","ماه"],["allTime","کل"]].forEach(([k,f])=>{const x=w.perf[k];if(x&&x.pnl!=null)row.append(el("span","chip "+(x.pnl>=0?"g":"r"),f+": "+(x.pnl>=0?"+":"")+M(x.pnl)+(x.roi!=null?" ("+(x.roi*100).toFixed(1)+"%)":"")))});wrap.append(el("div","sec","عملکرد (سود و بازده)"),row)}
+  (()=>{const sd=x=>x==="L"?"Long":"Short",f=LANG!=="en",pc=Math.round(100*Math.max(L,S)/tot),po=Math.round(100*opp/tot);return [top&&(f?`بزرگ‌ترین پوزیشن: ${top.coin} ${sd(top.side)} با $${M(top.n)} (${Math.round(100*top.n/tot)}٪ از کل حجم).`:`Largest position: ${top.coin} ${sd(top.side)} at $${M(top.n)} (${Math.round(100*top.n/tot)}% of total size).`),
+   f?`${pc}٪ حجم این نهنگ ${L>=S?"Long":"Short"} است.`:`${pc}% of this whale's size is ${L>=S?"Long":"Short"}.`,
+   near&&(f?`نزدیک‌ترین پوزیشن به قیمت لیکویید: ${near.coin} ${sd(near.side)} (فاصله‌ی تقریبی ${near.dist.toFixed(0)}٪).`:`Closest to liquidation: ${near.coin} ${sd(near.side)} (approx. ${near.dist.toFixed(0)}% away).`),
+   f?`${po}٪ از حجم او خلاف جهت اکثریت نهنگ‌های ردیابی‌شده است.`:`${po}% of its size is against the majority of tracked whales.`]})().filter(Boolean).forEach(t=>ins.append(el("li",0,t)));
+  wrap.append(el("div","sec",TR("خلاصه‌ی هوشمند")),Object.assign(el("div","panel"),{}));wrap.lastChild.append(ins);
+  if(w.perf){const row=el("div","chips");[["day",TR("روز")],["week",TR("هفته")],["month",TR("ماه")],["allTime",TR("کل")]].forEach(([k,f])=>{const x=w.perf[k];if(x&&x.pnl!=null)row.append(el("span","chip "+(x.pnl>=0?"g":"r"),f+": "+(x.pnl>=0?"+":"")+M(x.pnl)+(x.roi!=null?" ("+(x.roi*100).toFixed(1)+"%)":"")))});wrap.append(el("div","sec",TR("عملکرد (سود و بازده)")),row)}
   const C={};ps.forEach(p=>{const c=C[catOf(p.coin)]||(C[catOf(p.coin)]={l:0,s:0});p.side==="L"?c.l+=p.n:c.s+=p.n});
-  const cp=el("div","panel");Object.entries(C).sort((a,b)=>(b[1].l+b[1].s)-(a[1].l+a[1].s)).forEach(([k,c])=>{const r=el("div","cr");r.append(el("b",0,k),bar(c.l,c.s),el("span","mu",M(c.l+c.s)+" · "+Math.round(100*(c.l+c.s)/tot)+"%"));cp.append(r)});
-  wrap.append(el("div","sec","تمرکز پرتفو بر اساس دسته"),cp);
-  const rows=ps.map(p=>[[p.coin,"num"],[p.side==="L"?"Long":"Short",p.side==="L"?"g":"r"],[M(p.n),"num"],[Math.round(100*p.n/tot)+"%","num"],[P_(p.entry),"num"],[P_(p.mk),"num"],[P_(p.liq),"num"],[p.dist==null?"-":p.dist.toFixed(0)+"%","num "+(p.dist==null?"":p.dist<10?"r":p.dist<25?"ac":"g")],[M(p.upnl),"num "+(p.upnl>=0?"g":"r")],[p.lev==null?"-":p.lev+"x","num"],[p.same?"با گله":"خلاف گله",p.same?"mu":"ac"]]);
-  wrap.append(el("div","sec","همه‌ی پوزیشن‌ها"),tbl(["نماد","سمت","حجم","سهم","Entry","Mark","Liq","فاصله تا Liq","سود/زیان","اهرم","نسبت به گله"],rows));
-  wrap.append(el("footer",0,"قیمت Mark از تقسیم حجم بر اندازه‌ی پوزیشن برآورد شده و فاصله تا Liq تقریبی است (در مارجین کراس، لیکویید شدن به کل حساب بستگی دارد). این صفحه توصیه‌ی مالی نیست."));
+  const cp=el("div","panel");Object.entries(C).sort((a,b)=>(b[1].l+b[1].s)-(a[1].l+a[1].s)).forEach(([k,c])=>{const r=el("div","cr");r.append(el("b",0,TR(k)),bar(c.l,c.s),el("span","mu",M(c.l+c.s)+" · "+Math.round(100*(c.l+c.s)/tot)+"%"));cp.append(r)});
+  wrap.append(el("div","sec",TR("تمرکز پرتفو بر اساس دسته")),cp);
+  const rows=ps.map(p=>[[p.coin,"num"],[p.side==="L"?"Long":"Short",p.side==="L"?"g":"r"],[M(p.n),"num"],[Math.round(100*p.n/tot)+"%","num"],[P_(p.entry),"num"],[P_(p.mk),"num"],[P_(p.liq),"num"],[p.dist==null?"-":p.dist.toFixed(0)+"%","num "+(p.dist==null?"":p.dist<10?"r":p.dist<25?"ac":"g")],[M(p.upnl),"num "+(p.upnl>=0?"g":"r")],[p.lev==null?"-":p.lev+"x","num"],[p.same?TR("با گله"):TR("خلاف گله"),p.same?"mu":"ac"]]);
+  wrap.append(el("div","sec",TR("همه‌ی پوزیشن‌ها")),tbl([TR("نماد"),TR("سمت"),TR("حجم"),TR("سهم"),"Entry","Mark","Liq",TR("فاصله تا Liq"),TR("سود/زیان"),TR("اهرم"),TR("نسبت به گله")],rows));
+  wrap.append(el("footer",0,TR("قیمت Mark از تقسیم حجم بر اندازه‌ی پوزیشن برآورد شده و فاصله تا Liq تقریبی است (در مارجین کراس، لیکویید شدن به کل حساب بستگی دارد). این صفحه توصیه‌ی مالی نیست.")));
   P.append(wrap);
 }
 const P_=v=>P(v);
+function applyStatic(){
+  const R=document.documentElement;R.lang=LANG;R.dir=LANG==="en"?"ltr":"rtl";document.title="MAHQuant Whale Sonar";
+  const set=(sel,fa,i)=>{const e=i==null?document.querySelector(sel):document.querySelectorAll(sel)[i];if(e)e.textContent=TR(fa)};
+  set(".logo .mu","وال سونار");set('label[for="f"]',"بارگذاری snapshot.json");
+  set('[data-t="herd"]',"گله");set('[data-t="whales"]',"نهنگ‌ها");set('[data-t="pos"]',"پوزیشن‌ها");
+  set("#sd option","همه‌ی سمت‌ها",0);set("#mn option","همه‌ی حجم‌ها",0);set("#mn option","۱۰۰K و بالاتر",1);set("#mn option","۱M و بالاتر",2);set("#mn option","۱۰M و بالاتر",3);
+  const q=document.querySelector("#q");if(q)q.placeholder=TR("جست‌وجوی نماد (BTC ...)");
+  set("footer","این پنل فقط اطلاعات نمایش می‌دهد و توصیه‌ی مالی نیست. داده‌ها از API عمومی Hyperliquid گرفته می‌شود.");
+  const f=document.querySelector("footer");if(f)f.textContent+=" · MAHQuant · v0.5";
+  const b=document.querySelector("#lg");if(b)b.textContent=LANG==="en"?"فارسی":"EN";
+}
+function setLang(){LANG=LANG==="en"?"fa":"en";try{localStorage.setItem("lang",LANG)}catch(e){}applyStatic();status();render();if(curW)openW(curW,1)}
 function status(){
   const s=$("#st"),a=$("#age");
-  if(meta.sample){s.textContent="نمونه";s.className="badge ac";a.textContent="";$("#msg").textContent="این‌ها بخشی از داده‌ی اجرای واقعی قبلی توست. فایل snapshot.json را بارگذاری کن تا داده‌ی خودت نمایش داده شود.";return}
+  if(meta.sample){s.textContent=TR("نمونه");s.className="badge ac";a.textContent="";$("#msg").textContent=TR("این‌ها بخشی از داده‌ی اجرای واقعی قبلی توست. فایل snapshot.json را بارگذاری کن تا داده‌ی خودت نمایش داده شود.");return}
   const m=Math.max(0,Math.round((Date.now()-meta.time)/60000));
   const st=m<=15?["Fresh","g"]:m<=45?["Cached","ac"]:["Delayed","r"];
-  s.textContent=st[0];s.className="badge "+st[1];a.textContent="آخرین به‌روزرسانی: "+m+" دقیقه پیش";
-  $("#msg").textContent=meta.live?"داده‌ی زنده از جمع‌آوری خودکار (هر چند دقیقه به‌روز می‌شود)":"داده‌ی بارگذاری‌شده از فایل snapshot.json";
+  s.textContent=st[0];s.className="badge "+st[1];a.textContent=TR("آخرین به‌روزرسانی: ")+m+TR(" دقیقه پیش");
+  $("#msg").textContent=meta.live?TR("داده‌ی زنده از جمع‌آوری خودکار (هر چند دقیقه به‌روز می‌شود)"):TR("داده‌ی بارگذاری‌شده از فایل snapshot.json");
 }
 $("#f").addEventListener("change",e=>{
   const f=e.target.files[0];if(!f)return;const r=new FileReader();
@@ -217,13 +234,14 @@ $("#f").addEventListener("change",e=>{
     const s=JSON.parse(r.result);
     D=mapSnap(s);
     meta={sample:false,time:Date.parse(s.generated_at)||Date.now()};status();render();
-  }catch(err){$("#msg").textContent="فایل خوانده نشد. مطمئن شو snapshot.json خروجی whale_probe2.py است."}};
+  }catch(err){$("#msg").textContent=TR("فایل خوانده نشد. مطمئن شو snapshot.json خروجی whale_probe2.py است.")}};
   r.readAsText(f);
 });
 document.querySelectorAll("[data-t]").forEach(b=>b.addEventListener("click",()=>{tab=b.dataset.t;document.querySelectorAll("[data-t]").forEach(x=>x.classList.toggle("on",x===b));render()}));
 ["#q","#sd","#mn"].forEach(s=>$(s).addEventListener("input",render));
 document.documentElement.dataset.theme="dark";
 $("#th").onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==="dark"?"light":"dark"};
+applyStatic();$("#lg").onclick=setLang;
 status();render();
 pull();setInterval(pull,120000);setInterval(()=>{if(!meta.sample)status()},30000);
 </script>
