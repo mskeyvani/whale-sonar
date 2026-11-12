@@ -21,16 +21,20 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install crypto library
+        run: pip install cryptography
       - name: Collect whale data
+        env:
+          WHALE_MASTER: ${{ secrets.WHALE_MASTER }}
         run: python collector/whale_collector.py --out out/data.json
-      - name: Publish data.json to the "data" branch (history is overwritten each time)
+      - name: Publish the JSON files to the "data" branch (history is overwritten each time)
         run: |
-          mkdir -p /tmp/pub && cp out/data.json /tmp/pub/data.json
+          mkdir -p /tmp/pub && cp out/*.json /tmp/pub/
           cd /tmp/pub
           git init -q -b data
           git config user.name "whale-bot"
           git config user.email "whale-bot@users.noreply.github.com"
-          git add data.json
+          git add -A
           git commit -q -m "data $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
           git push -q --force origin data
