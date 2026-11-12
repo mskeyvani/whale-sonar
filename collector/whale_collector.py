@@ -15,6 +15,9 @@ Python 3.8+, standard library only.
     python whale_collector.py --out out/data.json
 """
 import argparse
+import base64
+import hashlib
+import hmac
 import json
 import os
 import sys
@@ -27,7 +30,7 @@ from datetime import datetime, timezone
 
 LEADERBOARD_URL = "https://stats-data.hyperliquid.xyz/Mainnet/leaderboard"
 INFO_URL = "https://api.hyperliquid.xyz/info"
-USER_AGENT = "Mozilla/5.0 (WhaleSonarCollector/0.4)"
+USER_AGENT = "Mozilla/5.0 (WhaleSonarCollector/0.5)"
 
 
 def http_json(url, payload=None, timeout=30, retries=3):
@@ -124,6 +127,86 @@ def fetch_positions(address):
     }
 
 
+# ---------------------------------------------------------------- sentiment (free preview)
+CATS = [
+    ("majors", ["BTC", "ETH"]),
+    ("memes", ["DOGE", "kPEPE", "kSHIB", "kBONK", "kFLOKI", "WIF", "FARTCOIN", "PENGU", "POPCAT", "MOODENG", "TRUMP",
+               "MELANIA", "PUMP", "USELESS", "TURBO", "BOME", "MEME", "GOAT", "BRETT", "SPX", "CASHCAT", "PNUT"]),
+    ("large", ["SOL", "BNB", "XRP", "ADA", "TRX", "AVAX", "DOT", "ATOM", "NEAR", "SUI", "APT", "LTC", "BCH", "XLM", "HBAR", "HYPE"]),
+]
+
+
+def cat_of(coin):
+    for name, coins in CATS:
+        if coin in coins:
+            return name
+    return "other"
+
+
+def senti(ws):
+    L = S = nl = ns = 0.0
+    for w in ws:
+        l = sum(p["notional"] for p in w["positions"] if p["side"] == "LONG")
+        q = sum(p["notional"] for p in w["positions"] if p["side"] == "SHORT")
+        L, S = L + l, S + q
+        nl += l > q
+        ns += q > l
+    nb = (L - S) / ((L + S) or 1)
+    cb = (nl - ns) / ((nl + ns) or 1)
+    return {"L": L, "S": S, "nl": int(nl), "ns": int(ns), "idx": int(50 + 50 * (0.6 * nb + 0.4 * cb) + 0.5)}
+
+
+def aggregate(whales, generated_at, stats):
+    """Numbers only (no addresses, no positions): this is the free, public preview."""
+    def month(w):
+        return (w.get("perf", {}).get("month") or {}).get("pnl")
+    best = sorted((w for w in whales if month(w) is not None), key=month, reverse=True)[:20]
+    H, K = {}, {}
+    for w in whales:
+        for p in w["positions"]:
+            for bucket, key in ((H, p["coin"]), (K, cat_of(p["coin"]))):
+                h = bucket.setdefault(key, {"l": 0.0, "s": 0.0, "nl": 0, "ns": 0})
+                if p["side"] == "LONG":
+                    h["l"] += p["notional"]; h["nl"] += 1
+                else:
+                    h["s"] += p["notional"]; h["ns"] += 1
+    top_h = dict(sorted(H.items(), key=lambda kv: kv[1]["l"] + kv[1]["s"], reverse=True)[:12])
+    allp = senti(whales)
+    top_sym = max(H.items(), key=lambda kv: kv[1]["l"] + kv[1]["s"], default=(None, {"l": 0, "s": 0}))
+    return {
+        "v": 1, "generated_at": generated_at, "stats": stats,
+        "totals": {"whales": len(whales), "positions": sum(len(w["positions"]) for w in whales),
+                   "L": allp["L"], "S": allp["S"], "top_symbol": top_sym[0],
+                   "top_symbol_size": top_sym[1]["l"] + top_sym[1]["s"]},
+        "all": allp, "top": senti(best) if len(best) >= 5 else None, "H": top_h, "K": K,
+    }
+
+
+# ---------------------------------------------------------------- licensing (encryption)
+def encrypt_outputs(snapshot, lic_path, master):
+    """Encrypts the full snapshot once; wraps the data key for every ACTIVE license.
+    A license that expired or was removed simply gets no key in the next snapshot."""
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    try:
+        with open(lic_path, encoding="utf-8") as f:
+            lics = [l for l in json.load(f) if l.get("id") and str(l.get("exp", "")) >= today and not l.get("revoked")]
+    except Exception as e:
+        print(f"WARNING: could not read {lic_path}: {e} -> publishing with NO active licenses")
+        lics = []
+    b64 = lambda b: base64.b64encode(b).decode()
+    dk = AESGCM.generate_key(bit_length=256)
+    iv = os.urandom(12)
+    raw = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")).encode()
+    enc = {"v": 1, "generated_at": snapshot["generated_at"], "iv": b64(iv), "ct": b64(AESGCM(dk).encrypt(iv, raw, None))}
+    keys = {}
+    for l in lics:
+        k = hmac.new(master, f'{l["id"]}|{l["exp"]}'.encode(), hashlib.sha256).digest()
+        n = os.urandom(12)
+        keys[l["id"]] = {"iv": b64(n), "ct": b64(AESGCM(k).encrypt(n, dk, None))}
+    return enc, {"v": 1, "generated_at": snapshot["generated_at"], "keys": keys}, len(lics)
+
+
 def main():
     ap = argparse.ArgumentParser(description="Whale Sonar collector")
     ap.add_argument("--candidates", type=int, default=500, help="leaderboard accounts to scan (largest accounts)")
@@ -135,6 +218,7 @@ def main():
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--min-ok", type=int, default=100, help="fail if fewer accounts were scanned OK")
     ap.add_argument("--out", default="out/data.json")
+    ap.add_argument("--licenses", default="licenses.json")
     args = ap.parse_args()
 
     t0 = time.time()
@@ -185,12 +269,26 @@ def main():
                   "with_positions": len(with_pos), "seconds": round(secs, 1)},
         "whales": kept,
     }
-    os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
-    tmp = args.out + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(snapshot, f, ensure_ascii=False, separators=(",", ":"))
-    os.replace(tmp, args.out)
-    print(f"saved {args.out} ({os.path.getsize(args.out) / 1024:.0f} KB)")
+    outdir = os.path.dirname(os.path.abspath(args.out))
+    os.makedirs(outdir, exist_ok=True)
+
+    def save(name, obj):
+        path = os.path.join(outdir, name)
+        with open(path + ".tmp", "w", encoding="utf-8") as f:
+            json.dump(obj, f, ensure_ascii=False, separators=(",", ":"))
+        os.replace(path + ".tmp", path)
+        print(f"saved {path} ({os.path.getsize(path) / 1024:.0f} KB)")
+
+    save("public.json", aggregate(kept, snapshot["generated_at"], snapshot["stats"]))
+    master = os.environ.get("WHALE_MASTER", "").strip()
+    if master and os.path.exists(args.licenses):
+        enc, keys, n = encrypt_outputs(snapshot, args.licenses, bytes.fromhex(master))
+        save("data.enc.json", enc)
+        save("keys.json", keys)
+        print(f"LICENSE MODE: full data encrypted for {n} active license(s)")
+    else:
+        save(os.path.basename(args.out), snapshot)
+        print("OPEN MODE: no WHALE_MASTER secret or licenses.json -> full data is public (not protected)")
     return 0
 
 
