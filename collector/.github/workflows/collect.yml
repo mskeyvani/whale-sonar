@@ -23,6 +23,12 @@ jobs:
           python-version: "3.12"
       - name: Install crypto library
         run: pip install cryptography
+      - name: Check license setup (prints no secret)
+        env:
+          WHALE_MASTER: ${{ secrets.WHALE_MASTER }}
+        run: |
+          if [ -n "$WHALE_MASTER" ]; then echo "WHALE_MASTER secret: SET (${#WHALE_MASTER} characters, should be 64)"; else echo "WHALE_MASTER secret: MISSING"; fi
+          if [ -f licenses.json ]; then echo "licenses.json: found"; head -c 600 licenses.json; else echo "licenses.json: NOT FOUND in the repo root"; fi
       - name: Collect whale data
         env:
           WHALE_MASTER: ${{ secrets.WHALE_MASTER }}
