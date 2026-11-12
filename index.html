@@ -75,12 +75,16 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
 .lk{color:var(--ac);cursor:pointer;font-weight:700;direction:ltr;display:inline-block}
 .pbw{width:100%;margin:6px 0 2px}.pbw small{font-size:11px}.pbh{display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:700;margin-top:2px}.pbw .bar{margin:4px 0}
 .cr .pbw{margin:0}
+.lock{padding:18px;text-align:center;margin-top:14px}.lock p{margin:8px 0 12px}.lock .btn{margin:4px;display:inline-block;text-decoration:none}
+.ta{width:100%;min-height:130px;direction:ltr;font-family:ui-monospace,Consolas,monospace;font-size:12px;background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:10px;margin:10px 0}
+#lm h2{margin:16px 0 8px}
 </style>
 </head>
 <body>
 <div class="top"><div class="wrap">
   <div class="logo"><span class="mk">🐋</span><b>MAHQuant Whale Sonar</b><span class="mu">داشبورد نهنگ‌ها</span></div>
   <div class="tools"><span id="st" class="badge"></span><span id="age" class="mu"></span>
+  <button id="lc" class="btn">🔑</button>
   <button id="lg" class="btn" title="Language">EN</button>
   <button id="th" class="btn" title="تغییر تم">◐</button>
   <label class="btn pri" for="f">بارگذاری snapshot.json</label><input id="f" type="file" accept=".json,application/json" hidden></div>
@@ -98,6 +102,7 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
 <footer>این پنل فقط اطلاعات نمایش می‌دهد و توصیه‌ی مالی نیست. داده‌ها از API عمومی Hyperliquid گرفته می‌شود.</footer>
 </div>
 <div id="wp" class="ov" hidden></div>
+<div id="lm" class="ov" hidden></div>
 <script>const LANG0=(()=>{try{const q=new URLSearchParams(location.search).get('lang');if(q==='fa'||q==='en')return q;const v=localStorage.getItem('lang');if(v)return v}catch(e){}return (typeof navigator!=='undefined'&&/^fa/i.test(navigator.language||''))?'fa':'en'})();
 let LANG=LANG0;
 const X=(a,b)=>LANG==="en"?b:a;
@@ -135,6 +140,7 @@ const PH=()=>[TR("نماد"),TR("سمت"),TR("حجم"),"Entry","Liq",TR("سود/
 function gauge(p){const a=Math.PI*(1-p),x=60+50*Math.cos(a),y=60-50*Math.sin(a),f=(c,d)=>`<path d="${d}" fill="none" stroke="${c}" stroke-width="10" stroke-linecap="round"/>`;
   return `<svg viewBox="0 0 120 68" width="132">${f("var(--r)","M10 60A50 50 0 0 1 110 60")}${p>.01?f("var(--g)",`M10 60A50 50 0 0 1 ${x.toFixed(1)} ${y.toFixed(1)}`):""}</svg>`}
 function render(){
+  if(mode==="free"&&PUB){["#q","#sd","#mn"].forEach(z=>{$(z).style.display="none"});const v0=$("#view");v0.replaceChildren();freeRender(v0);return}
   const F=flat(),v=$("#view");v.replaceChildren();["#q","#sd","#mn"].forEach(z=>{$(z).style.display=(tab==="senti"||tab==="rank")?"none":""});
   const L=F.filter(p=>p.side==="L").reduce((s,p)=>s+p.n,0),S=F.filter(p=>p.side==="S").reduce((s,p)=>s+p.n,0),T=(L+S)||1;
   const cards=$("#cards");cards.replaceChildren();
@@ -170,13 +176,7 @@ function render(){
     v.append(tbl([TR("نهنگ"),...PH()],F.slice(0,200).map(p=>posRow(p,true))));
   }
 }
-const DATA_URL="https://raw.githubusercontent.com/mskeyvani/whale-sonar/data/data.json";
 function mapSnap(s){return (s.whales||[]).map(w=>({label:w.name||(String(w.address).slice(0,6)+".."+String(w.address).slice(-4)),addr:w.address,perf:w.perf,acct:w.account_value,pos:(w.positions||[]).map(p=>({coin:String(p.coin),side:p.side==="LONG"?"L":"S",n:+p.notional||0,size:p.size,entry:p.entry,liq:p.liq,upnl:p.upnl,lev:p.leverage}))}))}
-async function pull(){
-  try{const r=await fetch(DATA_URL+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error(r.status);const j=await r.json();
-    D=mapSnap(j);meta={sample:false,live:true,time:Date.parse(j.generated_at)||Date.now()};status();render();openHash();if(curW)openW(curW,1)}
-  catch(e){if(meta.sample)$("#msg").textContent=TR("دریافت خودکار داده ممکن نشد؛ نمونه نمایش داده می‌شود. می‌توانی snapshot.json را دستی بارگذاری کنی.")}
-}
 
 const CATS=[["اصلی (BTC/ETH)",["BTC","ETH"]],["میم‌کوین‌ها",["DOGE","kPEPE","kSHIB","kBONK","kFLOKI","WIF","FARTCOIN","PENGU","POPCAT","MOODENG","TRUMP","MELANIA","PUMP","USELESS","TURBO","BOME","MEME","GOAT","BRETT","SPX","CASHCAT","PNUT"]],["بزرگ‌ها و لایه ۱",["SOL","BNB","XRP","ADA","TRX","AVAX","DOT","ATOM","NEAR","SUI","APT","LTC","BCH","XLM","HBAR","HYPE"]]];
 const catOf=c=>(CATS.find(x=>x[1].includes(c))||["سایر آلت‌کوین‌ها"])[0];
@@ -240,7 +240,7 @@ function applyStatic(){
   set("#sd option","همه‌ی سمت‌ها",0);set("#mn option","همه‌ی حجم‌ها",0);set("#mn option","۱۰۰K و بالاتر",1);set("#mn option","۱M و بالاتر",2);set("#mn option","۱۰M و بالاتر",3);
   const q=document.querySelector("#q");if(q)q.placeholder=TR("جست‌وجوی نماد (BTC ...)");
   set("footer","این پنل فقط اطلاعات نمایش می‌دهد و توصیه‌ی مالی نیست. داده‌ها از API عمومی Hyperliquid گرفته می‌شود.");
-  const f=document.querySelector("footer");if(f)f.textContent+=" · MAHQuant · v0.8";
+  const f=document.querySelector("footer");if(f)f.textContent+=" · MAHQuant · v0.9";
   const b=document.querySelector("#lg");if(b)b.textContent=LANG==="en"?"فارسی":"EN";
 }
 function setLang(){LANG=LANG==="en"?"fa":"en";try{localStorage.setItem("lang",LANG)}catch(e){}applyStatic();status();render();if(curW)openW(curW,1)}
@@ -248,8 +248,8 @@ function senti(list){let L=0,S=0,nl=0,ns=0;list.forEach(w=>{const l=w.pos.reduce
 const sLab=i=>i<20?X("نزولی شدید","Strongly bearish"):i<40?X("نزولی","Bearish"):i<60?X("خنثی","Neutral"):i<80?X("صعودی","Bullish"):X("صعودی شدید","Strongly bullish");
 const sCol=i=>i<40?"r":i>60?"g":"mu";
 function pbar(l,s,lab){const t=(l+s)||1,pl=Math.round(100*l/t),w=el("div","pbw"),h=el("div","pbh");h.append(el("span","g","Long ("+X("خرید","Buy")+") "+pl+X("٪","%")),el("span","r","Short ("+X("فروش","Sell")+") "+(100-pl)+X("٪","%")));if(lab)w.append(el("small","mu",lab));w.append(h,bar(l,s));return w}
-function sentiView(v){
-  const all=senti(D),tp=D.filter(w=>w.perf&&w.perf.month&&w.perf.month.pnl!=null).sort((a,b)=>b.perf.month.pnl-a.perf.month.pnl).slice(0,20),sm=tp.length>=5?senti(tp):null,g=el("div","cards");
+function sentiView(v,A){A=A||aggOfD();
+  const all=A.all,sm=A.sm,g=el("div","cards");
   const mk=(title,s,tx)=>{const c=el("div","card"),h=el("span","mu",title);h.append(tip(tx));const d=el("div");d.innerHTML=gauge(s.idx/100);c.append(h,el("b",sCol(s.idx),s.idx+" · "+sLab(s.idx)),d,pbar(s.L,s.S,X("به حجم دلاری","By dollar size")),pbar(s.nl,s.ns,X("به تعداد نهنگ‌ها","By number of whales")));g.append(c)};
   mk(X("شاخص سنتیمنت کل نهنگ‌ها","Overall whale sentiment"),all,X("ترکیب ۶۰٪ سهم Long در برابر Short به دلار و ۴۰٪ سهم نهنگ‌هایی که بیشتر Long یا Short هستند. ۰ = کاملاً Short، ۵۰ = خنثی، ۱۰۰ = کاملاً Long. فقط وضعیت نهنگ‌ها را نشان می‌دهد و توصیه‌ی معامله نیست.","60% dollar-weighted Long vs Short plus 40% share of whales that are net Long vs Short. 0 = fully Short, 50 = neutral, 100 = fully Long. It describes whale positioning only and is not trading advice."));
   if(sm)mk(X("نهنگ‌های برتر (۲۰ سودآور ماه اخیر)","Top performers (best 20 this month)"),sm,X("همان شاخص، فقط برای ۲۰ نهنگی که در ماه اخیر بیشترین سود دلاری را داشته‌اند.","The same index, computed only for the 20 whales with the highest 30-day profit."));
@@ -257,7 +257,7 @@ function sentiView(v){
   const ins=el("ul","ins"),add=t=>ins.append(el("li",0,t));
   add(X("شاخص کل ","Overall index ")+all.idx+" ("+sLab(all.idx)+")"+X("؛ ","; ")+X(all.nl+" نهنگ بیشتر Long و "+all.ns+" نهنگ بیشتر Short هستند.",all.nl+" whales lean Long and "+all.ns+" lean Short."));
   if(sm){const d=sm.idx-all.idx;add(Math.abs(d)<10?X("نهنگ‌های برتر ماه تقریباً هم‌جهت با کل نهنگ‌ها هستند.","Top performers are broadly aligned with all whales."):X("نهنگ‌های برتر ماه "+(d>0?"صعودی‌تر":"نزولی‌تر")+" از کل نهنگ‌ها هستند ("+sm.idx+" در برابر "+all.idx+").","Top performers are "+(d>0?"more bullish":"more bearish")+" than all whales ("+sm.idx+" vs "+all.idx+")."))}
-  const H={},K={};D.forEach(w=>w.pos.forEach(p=>{[[H,p.coin],[K,catOf(p.coin)]].forEach(([M_,k])=>{const h=M_[k]||(M_[k]={l:0,s:0,nl:0,ns:0});if(p.side==="L"){h.l+=p.n;h.nl++}else{h.s+=p.n;h.ns++}})}));
+  const H=A.H,K=A.K;
   const b=H.BTC;if(b)add(X(Math.round(100*b.ns/(b.nl+b.ns))+"٪ نهنگ‌هایی که روی BTC پوزیشن دارند Short هستند ("+b.ns+" از "+(b.nl+b.ns)+").",Math.round(100*b.ns/(b.nl+b.ns))+"% of whales holding BTC are Short ("+b.ns+" of "+(b.nl+b.ns)+")."));
   const pn=el("div","panel");pn.append(ins);v.append(el("div","sec",X("خلاصه‌ی سنتیمنت","Sentiment summary")),pn);
   const row=(name,h)=>{const r=el("div","cr");r.append(el("b",0,name),pbar(h.l,h.s),el("span","mu",h.nl+"↑ "+h.ns+"↓"));return r};
@@ -265,6 +265,7 @@ function sentiView(v){
   const srt=o=>Object.entries(o).sort((a,b)=>(b[1].l+b[1].s)-(a[1].l+a[1].s));
   panel(X("سنتیمنت کوین‌های اصلی (بر اساس حجم)","Sentiment by top symbols"),srt(H).slice(0,6).map(([c,h])=>row(c,h)));
   panel(X("سنتیمنت بر اساس دسته","Sentiment by category"),srt(K).map(([k,h])=>row(TR(k),h)));
+  if(!A.full)return;
   const T=[[X("غول‌ها (حساب ≥ 50M)","Giants (account ≥ 50M)"),5e7,1e15],[X("بزرگ (10M تا 50M)","Large (10M–50M)"),1e7,5e7],[X("متوسط (1M تا 10M)","Mid (1M–10M)"),1e6,1e7],[X("کوچک‌تر (زیر 1M)","Smaller (under 1M)"),0,1e6]];
   panel(X("سنتیمنت بر اساس اندازه‌ی نهنگ (ارزش حساب)","Sentiment by whale size (account value)"),T.map(([n,lo,hi])=>[n,senti(D.filter(w=>(w.acct||0)>=lo&&(w.acct||0)<hi))]).filter(([n,s])=>s.nl+s.ns>0).map(([n,s])=>{const r=el("div","cr");r.append(el("b",0,n),pbar(s.L,s.S),el("span","mu",s.nl+"↑ "+s.ns+"↓"));return r}));
   const cr=Object.entries(H).filter(([c,h])=>h.nl+h.ns>=5).map(([c,h])=>({c,h,p:h.l/((h.l+h.s)||1)}));
@@ -284,7 +285,55 @@ function rankView(v){
   v.append(tbl(["#",X("نهنگ","Whale"),X("سود/زیان","PnL"),"ROI",X("حجم معاملات","Volume"),X("ارزش حساب","Account"),X("جهت فعلی","Current bias")],rows),el("footer",0,X("بازده‌ی حساب‌های کوچک ممکن است گمراه‌کننده باشد؛ برای مقایسه‌ی عادلانه‌تر حداقل ارزش حساب را انتخاب کن. عملکرد گذشته تضمین آینده نیست.","ROI on small accounts can be misleading; choose a minimum account value for a fairer comparison. Past performance does not guarantee future results.")));
 }
 
+
+const BASE="https://raw.githubusercontent.com/mskeyvani/whale-sonar/data/",BUY_URL="https://www.mahquant.com";
+let mode="free",PUB=null,LIC=null;
+const fj=async n=>{const r=await fetch(BASE+n+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error(n+" "+r.status);return r.json()};
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)),hex=h=>Uint8Array.from(h.match(/../g).map(x=>parseInt(x,16)));
+function parseLic(t){try{t=String(t||"").trim();if(!t.startsWith("MQ1."))return null;let p=t.slice(4).replace(/-/g,"+").replace(/_/g,"/");while(p.length%4)p+="=";const o=JSON.parse(atob(p));return o&&o.id&&/^[0-9a-f]{64}$/.test(o.key||"")&&/^\d{4}-\d\d-\d\d$/.test(o.exp||"")?o:null}catch(e){return null}}
+async function unlock(L){const [K,E]=await Promise.all([fj("keys.json"),fj("data.enc.json")]);const w=K.keys[L.id];if(!w)throw new Error("inactive");
+  const S=crypto.subtle,ku=await S.importKey("raw",hex(L.key),"AES-GCM",false,["decrypt"]);
+  const dk=await S.importKey("raw",await S.decrypt({name:"AES-GCM",iv:b64(w.iv)},ku,b64(w.ct)),"AES-GCM",false,["decrypt"]);
+  return JSON.parse(new TextDecoder().decode(await S.decrypt({name:"AES-GCM",iv:b64(E.iv)},dk,b64(E.ct))))}
+let licMsg="";
+async function pull(){
+  let snap=null;licMsg="";
+  try{PUB=await fj("public.json")}catch(e){PUB=null}
+  if(LIC){try{snap=await unlock(LIC);mode="paid"}catch(e){mode="free";licMsg=/404/.test(e.message)?"":(e.message==="inactive"?(LIC.exp<new Date().toISOString().slice(0,10)?"expired":"inactive"):"invalid")}}
+  if(!snap&&licMsg===""){try{snap=await fj("data.json");mode="open"}catch(e){mode="free"}}
+  if(snap){D=mapSnap(snap);meta={sample:false,live:true,time:Date.parse(snap.generated_at)||Date.now()}}
+  else if(PUB){D=[];meta={sample:false,live:true,time:Date.parse(PUB.generated_at)||Date.now()}}
+  else{if(meta.sample)$("#msg").textContent=TR("دریافت خودکار داده ممکن نشد؛ نمونه نمایش داده می‌شود. می‌توانی snapshot.json را دستی بارگذاری کنی.");return}
+  status();render();openHash();if(curW&&mode!=="free")openW(curW,1);
+}
+function freeMsg(){return licMsg==="expired"?X("لایسنس منقضی شده است؛ برای تمدید با ما تماس بگیر.","Your license has expired; contact us to renew."):licMsg==="inactive"?X("این لایسنس فعال نیست (ممکن است منقضی یا حذف شده باشد).","This license is not active (expired or removed)."):licMsg==="invalid"?X("لایسنس معتبر نیست یا باز نشد.","The license is not valid or could not be opened."):X("نسخه‌ی رایگان: فقط خلاصه‌ی سنتیمنت. برای دسترسی کامل لایسنس وارد کن.","Free version: sentiment overview only. Enter a license for full access.")}
+function licBtn(){const b=$("#lc");if(!b)return;b.style.display=mode==="open"?"none":"";if(mode==="paid"&&LIC){const d=Math.max(0,Math.ceil((Date.parse(LIC.exp+"T23:59:59Z")-Date.now())/864e5));b.textContent="🔓 "+LIC.plan+" · "+d+X(" روز"," d");b.className="btn"+(d<=5?" r":"")}else{b.textContent="🔑 "+X("ورود لایسنس","Enter license");b.className="btn"}}
+function openLic(){const P=$("#lm");P.replaceChildren();P.hidden=false;const w=el("div","wrap"),msg=el("div","note"),ta=el("textarea","ta"),row=el("div","ctl");
+  ta.placeholder="MQ1.…";msg.textContent=X("متنی را که بعد از خرید دریافت کرده‌ای دقیقاً paste کن (با MQ1. شروع می‌شود). لایسنس فقط در مرورگر خودت ذخیره می‌شود.","Paste the text you received after purchase exactly as is (it starts with MQ1.). The license is stored only in your browser.");
+  const ok=el("button","btn pri",X("فعال‌سازی","Activate")),cl=el("button","btn",X("بستن","Close")),buy=el("a","btn",X("خرید / تمدید","Buy / renew"));buy.href=BUY_URL;buy.target="_blank";buy.rel="noopener";
+  ok.onclick=()=>{const o=parseLic(ta.value);if(!o){msg.textContent=X("کد معتبر نیست. دقیقاً همان متن را با MQ1. شروع کن و کامل paste کن.","Invalid code. Paste the full text starting with MQ1.");return}
+    try{localStorage.setItem("mq_lic",ta.value.trim())}catch(e){}LIC=o;P.hidden=true;pull()};
+  cl.onclick=()=>{P.hidden=true};row.append(ok,cl,buy);
+  if(LIC){const rm=el("button","btn r",X("حذف لایسنس از این مرورگر","Remove license from this browser"));rm.onclick=()=>{try{localStorage.removeItem("mq_lic")}catch(e){}LIC=null;mode="free";P.hidden=true;pull()};row.append(rm)}
+  w.append(el("h2",0,X("ورود لایسنس","Enter license")),msg,ta,row);P.append(w)}
+function lockBox(){const b=el("div","panel lock"),a=el("button","btn pri",X("ورود لایسنس","Enter license")),u=el("a","btn",X("خرید لایسنس","Get a license"));a.onclick=openLic;u.href=BUY_URL;u.target="_blank";u.rel="noopener";
+  b.append(el("b",0,"🔒 "+X("این بخش‌ها با لایسنس باز می‌شوند","These sections unlock with a license")),el("p","mu",X("فهرست نهنگ‌ها، صفحه‌ی هر نهنگ، نهنگ‌های برتر، سنتیمنت بر اساس اندازه‌ی نهنگ‌ها، شلوغ‌ترین Longها و Shortها و خلاصه‌ی هوشمند.","Whale list, whale pages, top performers, sentiment by whale size, most crowded Longs/Shorts and the smart summary.")),a,u);return b}
+function aggOfD(){const tp=D.filter(w=>w.perf&&w.perf.month&&w.perf.month.pnl!=null).sort((a,b)=>b.perf.month.pnl-a.perf.month.pnl).slice(0,20),H={},K={};
+  D.forEach(w=>w.pos.forEach(p=>{[[H,p.coin],[K,catOf(p.coin)]].forEach(([M_,k])=>{const h=M_[k]||(M_[k]={l:0,s:0,nl:0,ns:0});if(p.side==="L"){h.l+=p.n;h.nl++}else{h.s+=p.n;h.ns++}})}));
+  return{all:senti(D),sm:tp.length>=5?senti(tp):null,H,K,full:true}}
+function aggOfPub(){const nm={majors:CATS[0][0],memes:CATS[1][0],large:CATS[2][0],other:"سایر آلت‌کوین‌ها"},K={};Object.entries(PUB.K||{}).forEach(([k,h])=>K[nm[k]||k]=h);return{all:PUB.all,sm:PUB.top,H:PUB.H||{},K,full:false}}
+function freeRender(v){
+  const t=PUB.totals||{L:0,S:0},c=$("#cards"),T_=(t.L+t.S)||1,gd=el("div");c.replaceChildren();gd.innerHTML=gauge(t.L/T_);gd.append(pbar(t.L,t.S));
+  const card=(k,val,sub,extra)=>{const e=el("div","card");e.append(el("span","mu",k),el("b",0,val));if(sub)e.append(el("small",0,sub));if(extra)e.append(extra);c.append(e)};
+  card(X("نهنگ‌های ردیابی‌شده","Tracked whales"),t.whales||0,X((t.positions||0)+" پوزیشن باز",(t.positions||0)+" open positions"));
+  card(X("حجم کل پوزیشن‌ها","Total position size"),"$"+M(t.L+t.S),"Long "+M(t.L)+" · Short "+M(t.S));
+  card(X("تمایل بازار (به دلار)","Market bias (by $)"),Math.round(100*t.L/T_)+"% Long",null,gd);
+  card(X("پرحجم‌ترین نماد","Top symbol by size"),t.top_symbol||"-","$"+M(t.top_symbol_size||0));
+  if(tab==="senti"&&PUB.all){sentiView(v,aggOfPub());v.append(lockBox())}else v.append(lockBox());
+}
+
 function status(){
+  setTimeout(()=>{if(mode==="free"&&!meta.sample&&PUB)$("#msg").textContent=freeMsg();licBtn()},0);
   const s=$("#st"),a=$("#age");
   if(meta.sample){s.textContent=TR("نمونه");s.className="badge ac";a.textContent="";$("#msg").textContent=TR("این‌ها بخشی از داده‌ی اجرای واقعی قبلی توست. فایل snapshot.json را بارگذاری کن تا داده‌ی خودت نمایش داده شود.");return}
   const m=Math.max(0,Math.round((Date.now()-meta.time)/60000));
@@ -296,7 +345,7 @@ $("#f").addEventListener("change",e=>{
   const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{
     const s=JSON.parse(r.result);
-    D=mapSnap(s);
+    D=mapSnap(s);mode="open";
     meta={sample:false,time:Date.parse(s.generated_at)||Date.now()};status();render();
   }catch(err){$("#msg").textContent=TR("فایل خوانده نشد. مطمئن شو snapshot.json خروجی whale_probe2.py است.")}};
   r.readAsText(f);
@@ -305,7 +354,8 @@ document.querySelectorAll("[data-t]").forEach(b=>b.addEventListener("click",()=>
 ["#q","#sd","#mn"].forEach(s=>$(s).addEventListener("input",render));
 document.documentElement.dataset.theme="dark";
 $("#th").onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==="dark"?"light":"dark"};
-applyStatic();$("#lg").onclick=setLang;
+try{LIC=parseLic(localStorage.getItem("mq_lic"))}catch(e){}
+applyStatic();$("#lg").onclick=setLang;$("#lc").onclick=openLic;
 status();render();
 pull();setInterval(pull,120000);setInterval(()=>{if(!meta.sample)status()},30000);
 </script>
