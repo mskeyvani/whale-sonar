@@ -23,7 +23,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;animation:p 1.8s infinite}
 @keyframes p{50%{opacity:.25}}
 .btn,select,input[type=search]{font:inherit;color:var(--tx);background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:6px 12px}
-.btn{cursor:pointer}.btn.pri{background:var(--ac);border-color:var(--ac);color:#fff}
+.btn{cursor:pointer}.btn.pri{background:var(--ac);border-color:var(--ac);color:var(--on,#fff)}
 .note{background:var(--sf);border:1px dashed var(--bd);border-radius:12px;padding:8px 14px;margin-bottom:14px;color:var(--mu)}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
 .card{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:14px 16px;position:relative;overflow:hidden;animation:f .4s}
@@ -78,6 +78,9 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
 .lock{padding:18px;text-align:center;margin-top:14px}.lock p{margin:8px 0 12px}.lock .btn{margin:4px;display:inline-block;text-decoration:none}
 .ta{width:100%;min-height:130px;direction:ltr;font-family:ui-monospace,Consolas,monospace;font-size:12px;background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:10px;margin:10px 0}
 #lm h2{margin:16px 0 8px}
+.tp{position:fixed;z-index:40;top:58px;inset-inline-end:14px;width:min(92vw,340px);max-height:70vh;overflow:auto;background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;box-shadow:0 12px 34px #0009}
+.tp .th{font:inherit;color:var(--tx);background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 9px;display:flex;align-items:center;gap:8px;cursor:pointer;text-align:start}
+.tp .th.sel{outline:2px solid var(--ac)}.dots{display:inline-flex}.dots i{width:12px;height:12px;border-radius:50%;margin-inline-end:-3px;border:1px solid #0006}
 </style>
 </head>
 <body>
@@ -86,7 +89,7 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
   <div class="tools"><span id="st" class="badge"></span><span id="age" class="mu"></span>
   <button id="lc" class="btn">🔑</button>
   <button id="lg" class="btn" title="Language">EN</button>
-  <button id="th" class="btn" title="تغییر تم">◐</button>
+  <button id="th" class="btn" title="Theme / تم">🎨</button>
   <label class="btn pri" for="f">بارگذاری snapshot.json</label><input id="f" type="file" accept=".json,application/json" hidden></div>
 </div></div>
 <div class="wrap">
@@ -101,6 +104,7 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
 <div id="view"></div>
 <footer>این پنل فقط اطلاعات نمایش می‌دهد و توصیه‌ی مالی نیست. داده‌ها از API عمومی Hyperliquid گرفته می‌شود.</footer>
 </div>
+<div id="tp" class="tp" hidden></div>
 <div id="wp" class="ov" hidden></div>
 <div id="lm" class="ov" hidden></div>
 <script>const LANG0=(()=>{try{const q=new URLSearchParams(location.search).get('lang');if(q==='fa'||q==='en')return q;const v=localStorage.getItem('lang');if(v)return v}catch(e){}return (typeof navigator!=='undefined'&&/^fa/i.test(navigator.language||''))?'fa':'en'})();
@@ -240,7 +244,7 @@ function applyStatic(){
   set("#sd option","همه‌ی سمت‌ها",0);set("#mn option","همه‌ی حجم‌ها",0);set("#mn option","۱۰۰K و بالاتر",1);set("#mn option","۱M و بالاتر",2);set("#mn option","۱۰M و بالاتر",3);
   const q=document.querySelector("#q");if(q)q.placeholder=TR("جست‌وجوی نماد (BTC ...)");
   set("footer","این پنل فقط اطلاعات نمایش می‌دهد و توصیه‌ی مالی نیست. داده‌ها از API عمومی Hyperliquid گرفته می‌شود.");
-  const f=document.querySelector("footer");if(f)f.textContent+=" · MAHQuant · v0.9";
+  const f=document.querySelector("footer");if(f)f.textContent+=" · MAHQuant · v0.9.2";
   const b=document.querySelector("#lg");if(b)b.textContent=LANG==="en"?"فارسی":"EN";
 }
 function setLang(){LANG=LANG==="en"?"fa":"en";try{localStorage.setItem("lang",LANG)}catch(e){}applyStatic();status();render();if(curW)openW(curW,1)}
@@ -332,6 +336,16 @@ function freeRender(v){
   if(tab==="senti"&&PUB.all){sentiView(v,aggOfPub());v.append(lockBox())}else v.append(lockBox());
 }
 
+const THEMES={"dark":{"n":["تیره","Dark"],"v":["#0a0e14","#121822","#18202c","#e6ebf2","#8593a8","#223044","#22d39a","#ff5d73","#6d9bff"],"s":"dark"},"light":{"n":["روشن","Light"],"v":["#f3f5f9","#ffffff","#eef2f8","#0f1722","#5a6678","#dfe5ee","#0e9f6e","#e0344a","#3b6cf6"],"s":"light"},"cyber":{"n":["سایبر","Cyber"],"v":["#0A0E17","#161B26","#1E2636","#E2E8F0","#94A3B8","#2A374A","#00FFA3","#FF003C","#00F0FF"],"s":"dark"},"gold":{"n":["طلایی","Gold"],"v":["#121212","#1E1E1E","#2A2A2A","#F3F4F6","#9CA3AF","#333333","#4ADE80","#F87171","#FBBF24"],"s":"dark"},"fintech":{"n":["فین‌تک","Fintech"],"v":["#F3F4F6","#FFFFFF","#F9FAFB","#111827","#5B6472","#E5E7EB","#059669","#EF4444","#4F46E5"],"s":"light"},"oceanic":{"n":["اقیانوسی","Oceanic"],"v":["#001F3F","#002B54","#003B70","#E0F2FE","#7DD3FC","#0369A1","#2DD4BF","#F43F5E","#38BDF8"],"s":"dark"},"amethyst":{"n":["یاقوتی","Amethyst"],"v":["#170B23","#241136","#341A4B","#F5F3FF","#C4B5FD","#5B21B6","#34D399","#FB7185","#A78BFA"],"s":"dark"},"tangerine":{"n":["نارنجی","Tangerine"],"v":["#1A0A00","#2B1200","#3F1B00","#FFF7ED","#FDBA74","#7C2D12","#10B981","#EF4444","#F97316"],"s":"dark"},"forest":{"n":["جنگلی","Forest"],"v":["#05120A","#0A1C10","#112F1A","#DCFCE7","#86EFAC","#1E462A","#22C55E","#EF4444","#4ADE80"],"s":"dark"},"navy":{"n":["سرمه‌ای","Navy"],"v":["#0B1120","#111827","#1F2937","#F9FAFB","#9CA3AF","#374151","#10B981","#F43F5E","#3B82F6"],"s":"dark"},"mint":{"n":["نعنایی","Mint"],"v":["#F0FDF4","#FFFFFF","#DCFCE7","#064E3B","#047857","#A7F3D0","#059669","#E11D48","#0D9488"],"s":"light"},"arctic":{"n":["قطبی","Arctic"],"v":["#F0F9FF","#FFFFFF","#E0F2FE","#082F49","#0369A1","#BAE6FD","#059669","#DC2626","#0284C7"],"s":"light"},"coffee":{"n":["قهوه‌ای","Coffee"],"v":["#1E1B18","#2C2621","#3D332C","#F3EBE1","#B4A59A","#4D3F35","#8BC34A","#E57358","#C29B70"],"s":"dark"},"cvd":{"n":["مناسب کوررنگی","Color-blind friendly"],"v":["#0B1120","#111827","#1F2937","#F9FAFB","#9CA3AF","#374151","#3B9BFF","#FFA726","#C4B5FD"],"s":"dark"}};
+function lumH(h){const c=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255).map(x=>x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4));return .2126*c[0]+.7152*c[1]+.0722*c[2]}
+let THEME="dark";
+function applyTheme(id){const t=THEMES[id]||THEMES.dark,R=document.documentElement,k=["--bg","--sf","--s2","--tx","--mu","--bd","--g","--r","--ac"];THEME=THEMES[id]?id:"dark";
+  k.forEach((n,i)=>R.style.setProperty(n,t.v[i]));R.style.setProperty("--on",lumH(t.v[8])>.4?"#0b0f14":"#ffffff");R.style.setProperty("color-scheme",t.s);R.dataset.theme=THEME;
+  try{localStorage.setItem("mq_theme",THEME)}catch(e){}}
+function openThemes(){const P=$("#tp");if(!P.hidden){P.hidden=true;return}P.replaceChildren();P.hidden=false;
+  Object.entries(THEMES).forEach(([id,t])=>{const b=el("button","th"+(id===THEME?" sel":"")),d=el("span","dots");[t.v[0],t.v[8],t.v[6],t.v[7]].forEach(c=>{const i=el("i");i.style.background=c;d.append(i)});
+    b.append(d,el("span",0,X(t.n[0],t.n[1])));b.onclick=()=>{applyTheme(id);P.hidden=true;status();render()};P.append(b)})}
+addEventListener("click",e=>{const P=$("#tp");if(P&&!P.hidden&&!(e.target.closest&&(e.target.closest("#tp")||e.target.closest("#th"))))P.hidden=true});
 function status(){
   setTimeout(()=>{if(mode==="free"&&!meta.sample&&PUB)$("#msg").textContent=freeMsg();licBtn()},0);
   const s=$("#st"),a=$("#age");
@@ -352,8 +366,8 @@ $("#f").addEventListener("change",e=>{
 });
 document.querySelectorAll("[data-t]").forEach(b=>b.addEventListener("click",()=>{tab=b.dataset.t;document.querySelectorAll("[data-t]").forEach(x=>x.classList.toggle("on",x===b));render()}));
 ["#q","#sd","#mn"].forEach(s=>$(s).addEventListener("input",render));
-document.documentElement.dataset.theme="dark";
-$("#th").onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==="dark"?"light":"dark"};
+let st0="dark";try{st0=localStorage.getItem("mq_theme")||"dark"}catch(e){}
+applyTheme(st0);$("#th").onclick=openThemes;
 try{LIC=parseLic(localStorage.getItem("mq_lic"))}catch(e){}
 applyStatic();$("#lg").onclick=setLang;$("#lc").onclick=openLic;
 status();render();
