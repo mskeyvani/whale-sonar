@@ -26,11 +26,11 @@ import time
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 LEADERBOARD_URL = "https://stats-data.hyperliquid.xyz/Mainnet/leaderboard"
 INFO_URL = "https://api.hyperliquid.xyz/info"
-USER_AGENT = "Mozilla/5.0 (WhaleSonarCollector/0.5)"
+USER_AGENT = "Mozilla/5.0 (WhaleSonarCollector/0.6)"
 
 
 def http_json(url, payload=None, timeout=30, retries=3):
@@ -183,28 +183,121 @@ def aggregate(whales, generated_at, stats):
 
 
 # ---------------------------------------------------------------- licensing (encryption)
-def encrypt_outputs(snapshot, lic_path, master):
-    """Encrypts the full snapshot once; wraps the data key for every ACTIVE license.
-    A license that expired or was removed simply gets no key in the next snapshot."""
+def encrypt_outputs(snapshot, lics, master):
+    """Encrypts the full snapshot once; wraps the data key (plus expiry and plan) for every ACTIVE license.
+    The license key depends only on the license id, so renewing = changing the expiry date, no new code."""
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    try:
-        with open(lic_path, encoding="utf-8") as f:
-            lics = [l for l in json.load(f) if l.get("id") and str(l.get("exp", "")) >= today and not l.get("revoked")]
-    except Exception as e:
-        print(f"WARNING: could not read {lic_path}: {e} -> publishing with NO active licenses")
-        lics = []
+    active = [l for l in lics if l["exp"] >= today and not l.get("revoked")]
     b64 = lambda b: base64.b64encode(b).decode()
     dk = AESGCM.generate_key(bit_length=256)
     iv = os.urandom(12)
     raw = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":")).encode()
     enc = {"v": 1, "generated_at": snapshot["generated_at"], "iv": b64(iv), "ct": b64(AESGCM(dk).encrypt(iv, raw, None))}
     keys = {}
-    for l in lics:
-        k = hmac.new(master, f'{l["id"]}|{l["exp"]}'.encode(), hashlib.sha256).digest()
+    for l in active:
+        k = hmac.new(master, l["id"].encode(), hashlib.sha256).digest()
+        info = json.dumps({"dk": b64(dk), "exp": l["exp"], "plan": l.get("plan", "")}).encode()
         n = os.urandom(12)
-        keys[l["id"]] = {"iv": b64(n), "ct": b64(AESGCM(k).encrypt(n, dk, None))}
-    return enc, {"v": 1, "generated_at": snapshot["generated_at"], "keys": keys}, len(lics)
+        keys[l["id"]] = {"iv": b64(n), "ct": b64(AESGCM(k).encrypt(n, info, None))}
+    return enc, {"v": 1, "generated_at": snapshot["generated_at"], "keys": keys}, len(active)
+
+
+# ---------------------------------------------------------------- state: whale numbers, events, last good licenses
+import re
+HEX8 = re.compile(r"^[0-9a-f]{8}$")
+DATE = re.compile(r"^\d{4}-\d\d-\d\d$")
+EV_MIN, CHG_PCT = 100_000, 10          # ignore position changes smaller than $100K / 10%
+
+
+def _state_key(master):
+    return hmac.new(master, b"state-v1", hashlib.sha256).digest()
+
+
+def load_state(path, master):
+    fresh = {"v": 1, "next": 1, "reg": {}, "prev": {}, "events": [], "lics": None}
+    if not path or not os.path.exists(path) or os.path.getsize(path) == 0:
+        return fresh
+    with open(path, encoding="utf-8") as f:
+        obj = json.load(f)
+    if "ct" in obj:
+        if not master:
+            raise RuntimeError("state is encrypted but WHALE_MASTER is not set")
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        obj = json.loads(AESGCM(_state_key(master)).decrypt(base64.b64decode(obj["iv"]), base64.b64decode(obj["ct"]), None))
+    return obj
+
+
+def dump_state(state, master):
+    if not master:
+        return state
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    iv = os.urandom(12)
+    ct = AESGCM(_state_key(master)).encrypt(iv, json.dumps(state, separators=(",", ":")).encode(), None)
+    return {"v": 1, "iv": base64.b64encode(iv).decode(), "ct": base64.b64encode(ct).decode()}
+
+
+def assign_numbers(state, kept):
+    for w in kept:
+        a = w["address"].lower()
+        if a not in state["reg"]:
+            state["reg"][a] = state["next"]
+            state["next"] += 1
+        w["num"] = state["reg"][a]
+
+
+def snapshot_positions(kept):
+    return {str(w["num"]): {p["coin"]: ["L" if p["side"] == "LONG" else "S", p["size"], p["notional"], p["upnl"] or 0]
+                            for p in w["positions"]} for w in kept}
+
+
+def compute_events(prev, kept, now):
+    out = []
+
+    def ev(w, c, k, side, nt, d, up):
+        out.append({"t": now, "n": w["num"], "coin": c, "k": k, "side": side, "nt": round(nt), "d": round(d), "up": round(up or 0)})
+
+    for w in kept:
+        old = prev.get(str(w["num"]))
+        if old is None:
+            continue                      # whale newly tracked: no events, avoids a flood
+        cur = {p["coin"]: p for p in w["positions"]}
+        for c, (sd, sz, nt, up) in old.items():
+            p, osd = cur.get(c), ("LONG" if sd == "L" else "SHORT")
+            if p is None:
+                if nt >= EV_MIN:
+                    ev(w, c, "close", osd, nt, -nt, up)
+            elif p["side"] != osd:
+                if max(nt, p["notional"]) >= EV_MIN:
+                    ev(w, c, "flip", p["side"], p["notional"], p["notional"], p["upnl"])
+            elif sz > 0 and p["size"] > 0:
+                pct = (p["size"] - sz) / sz * 100
+                d = (p["size"] - sz) * (p["notional"] / p["size"])
+                if abs(pct) >= CHG_PCT and abs(d) >= EV_MIN:
+                    k = "add" if pct > 0 else ("reduce_profit" if (p["upnl"] or 0) > 0 else "reduce")
+                    ev(w, c, k, p["side"], p["notional"], d, p["upnl"])
+        for c, p in cur.items():
+            if c not in old and p["notional"] >= EV_MIN:
+                ev(w, c, "open", p["side"], p["notional"], p["notional"], p["upnl"])
+    return out
+
+
+def read_licenses(path, state):
+    """Valid file -> use it and remember it. Broken file -> keep using the last valid list (nobody gets locked out)."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            raw = json.load(f)
+        assert isinstance(raw, list)
+        lics = []
+        for l in raw:
+            assert HEX8.match(str(l["id"])) and DATE.match(str(l["exp"]))
+            lics.append({"id": l["id"], "exp": l["exp"], "plan": l.get("plan", ""), "revoked": bool(l.get("revoked"))})
+        state["lics"] = lics
+        return lics
+    except Exception as e:
+        last = state.get("lics") or []
+        print(f"WARNING: {path} is missing or invalid ({e}). Using the last valid list ({len(last)} licenses).")
+        return last
 
 
 def main():
@@ -219,6 +312,7 @@ def main():
     ap.add_argument("--min-ok", type=int, default=100, help="fail if fewer accounts were scanned OK")
     ap.add_argument("--out", default="out/data.json")
     ap.add_argument("--licenses", default="licenses.json")
+    ap.add_argument("--state-in", default="state_prev.json", help="previous state file (whale numbers, events)")
     args = ap.parse_args()
 
     t0 = time.time()
@@ -262,12 +356,24 @@ def main():
         print(f"ERROR: only {len(results)} accounts scanned OK (< {args.min_ok}); keeping the old snapshot.")
         return 1
 
+    master_hex = os.environ.get("WHALE_MASTER", "").strip()
+    master_b = bytes.fromhex(master_hex) if master_hex else b""
+    now_iso = datetime.now(timezone.utc).isoformat()
+    state = load_state(args.state_in, master_b)
+    assign_numbers(state, kept)
+    new_events = compute_events(state.get("prev", {}), kept, now_iso)
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=48)).isoformat()
+    events = [e for e in state.get("events", []) if e["t"] >= cutoff] + new_events
+    events = events[-400:]
+    state["prev"], state["events"] = snapshot_positions(kept), events
+    print(f"whale numbers assigned up to #{state['next'] - 1} | new events this run: {len(new_events)}")
     snapshot = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": now_iso,
         "source": "hyperliquid-public-api",
         "stats": {"scanned_ok": len(results), "failed": len(errors),
                   "with_positions": len(with_pos), "seconds": round(secs, 1)},
         "whales": kept,
+        "events": events,
     }
     outdir = os.path.dirname(os.path.abspath(args.out))
     os.makedirs(outdir, exist_ok=True)
@@ -280,15 +386,17 @@ def main():
         print(f"saved {path} ({os.path.getsize(path) / 1024:.0f} KB)")
 
     save("public.json", aggregate(kept, snapshot["generated_at"], snapshot["stats"]))
-    master = os.environ.get("WHALE_MASTER", "").strip()
-    if master and os.path.exists(args.licenses):
-        enc, keys, n = encrypt_outputs(snapshot, args.licenses, bytes.fromhex(master))
+    # (state.json is saved after the license step, because that step may update the last-valid license list)
+    master = master_hex
+    if master:
+        enc, keys, n = encrypt_outputs(snapshot, read_licenses(args.licenses, state), master_b)
         save("data.enc.json", enc)
         save("keys.json", keys)
         print(f"LICENSE MODE: full data encrypted for {n} active license(s)")
     else:
         save(os.path.basename(args.out), snapshot)
-        print("OPEN MODE: no WHALE_MASTER secret or licenses.json -> full data is public (not protected)")
+        print("OPEN MODE: no WHALE_MASTER secret -> full data is public (not protected)")
+    save("state.json", dump_state(state, master_b))
     return 0
 
 
