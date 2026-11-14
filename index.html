@@ -83,6 +83,8 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
 .tp .th.sel{outline:2px solid var(--ac)}.dots{display:inline-flex}.dots i{width:12px;height:12px;border-radius:50%;margin-inline-end:-3px;border:1px solid #0006}
 .star{background:none;border:0;font-size:20px;cursor:pointer;color:var(--mu);padding:0 4px}.star.on{color:#FBBF24}
 .ev{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bd)}.ev:last-child{border:0}
+.nr{display:flex;align-items:center;flex-wrap:wrap;gap:4px}.nchip{background:var(--ac);color:var(--on,#fff);font-size:12px;font-weight:700;border-radius:8px;padding:0 8px;line-height:20px}
+.wc .btn{width:100%;margin-top:8px}
 </style>
 </head>
 <body>
@@ -172,11 +174,11 @@ function render(){
     Object.entries(G).sort((a,b)=>tot(b[1])-tot(a[1])).forEach(([w,ps])=>{
       const l=tot(ps.filter(p=>p.side==="L")),s=tot(ps.filter(p=>p.side==="S")),d=el("details","wc"),sm=el("summary"),top=el("div","wt"),av=el("span","av",w.replace(/^0x/,"").slice(0,2).toUpperCase()),nm=el("span","nm"),ch=el("div","chips"),wm=el("div","wm");
       av.style.background="hsl("+([...w].reduce((a,c)=>a+c.charCodeAt(0),0)*7%360)+" 55% 45%)";
-      nm.append(el("b",0,w),el("small","mu",(ps[0].num!=null?"#"+ps[0].num+" · ":"")+TR("حساب ")+M(ps[0].acct)));
-      const ob=el("button","btn",TR("صفحه‌ی نهنگ ←"));ob.onclick=e=>{e.preventDefault();e.stopPropagation();openW(w)};top.append(av,nm,el("span","tag "+(l>=s?"g":"r"),l>=s?"Long-heavy":"Short-heavy"),starBtn(ps[0].num),ob);
+      const nr=el("div","nr");if(ps[0].num!=null)nr.append(el("span","nchip","#"+ps[0].num));nr.append(el("b",0,w));nm.append(nr,el("small","mu",TR("حساب ")+M(ps[0].acct)));
+      const ob=el("button","btn",TR("صفحه‌ی نهنگ ←"));ob.onclick=e=>{e.preventDefault();e.stopPropagation();openW(w)};top.append(av,nm,el("span","tag "+(l>=s?"g":"r"),l>=s?"Long-heavy":"Short-heavy"),starBtn(ps[0].num));
       wm.append(el("span",0,TR("حجم $")+M(l+s)),el("span","mu",ps.length+TR(" پوزیشن · برای جزئیات کلیک کن")));
       ps.slice(0,3).forEach(p=>ch.append(el("span","chip "+(p.side==="L"?"g":"r"),p.coin+" "+M(p.n))));
-      sm.append(top,pbar(l,s),wm,ch);d.append(sm,tbl(PH(),ps.map(p=>posRow(p,false))));grid.append(d)});
+      sm.append(top,pbar(l,s),wm,ch,ob);d.append(sm,tbl(PH(),ps.map(p=>posRow(p,false))));grid.append(d)});
     v.append(grid);
   }else{
     v.append(tbl([TR("نهنگ"),...PH()],F.slice(0,200).map(p=>posRow(p,true))));
@@ -247,7 +249,7 @@ function applyStatic(){
   set("#sd option","همه‌ی سمت‌ها",0);set("#mn option","همه‌ی حجم‌ها",0);set("#mn option","۱۰۰K و بالاتر",1);set("#mn option","۱M و بالاتر",2);set("#mn option","۱۰M و بالاتر",3);
   const q=document.querySelector("#q");if(q)q.placeholder=TR("جست‌وجوی نماد (BTC ...)");
   set("footer","این پنل فقط اطلاعات نمایش می‌دهد و توصیه‌ی مالی نیست. داده‌ها از API عمومی Hyperliquid گرفته می‌شود.");
-  const f=document.querySelector("footer");if(f)f.textContent+=" · MAHQuant · v1.0";
+  const f=document.querySelector("footer");if(f)f.textContent+=" · MAHQuant · v1.0.1";
   const b=document.querySelector("#lg");if(b)b.textContent=LANG==="en"?"فارسی":"EN";
 }
 function setLang(){LANG=LANG==="en"?"fa":"en";try{localStorage.setItem("lang",LANG)}catch(e){}applyStatic();status();render();if(curW)openW(curW,1)}
