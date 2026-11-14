@@ -81,6 +81,8 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
 .tp{position:fixed;z-index:40;top:58px;inset-inline-end:14px;width:min(92vw,340px);max-height:70vh;overflow:auto;background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;box-shadow:0 12px 34px #0009}
 .tp .th{font:inherit;color:var(--tx);background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:7px 9px;display:flex;align-items:center;gap:8px;cursor:pointer;text-align:start}
 .tp .th.sel{outline:2px solid var(--ac)}.dots{display:inline-flex}.dots i{width:12px;height:12px;border-radius:50%;margin-inline-end:-3px;border:1px solid #0006}
+.star{background:none;border:0;font-size:20px;cursor:pointer;color:var(--mu);padding:0 4px}.star.on{color:#FBBF24}
+.ev{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bd)}.ev:last-child{border:0}
 </style>
 </head>
 <body>
@@ -96,7 +98,7 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
 <div id="msg" class="note"></div>
 <div id="cards" class="cards"></div>
 <div class="ctl">
-  <div class="seg"><button class="on" data-t="senti">سنتیمنت</button><button data-t="herd">گله</button><button data-t="rank">برترین‌ها</button><button data-t="whales">نهنگ‌ها</button><button data-t="pos">پوزیشن‌ها</button></div>
+  <div class="seg"><button class="on" data-t="senti">سنتیمنت</button><button data-t="herd">گله</button><button data-t="rank">برترین‌ها</button><button data-t="fav">⭐ علاقه‌مندی‌ها</button><button data-t="whales">نهنگ‌ها</button><button data-t="pos">پوزیشن‌ها</button></div>
   <input id="q" type="search" placeholder="جست‌وجوی نماد (BTC ...)">
   <select id="sd"><option value="">همه‌ی سمت‌ها</option><option value="L">Long</option><option value="S">Short</option></select>
   <select id="mn"><option value="0">همه‌ی حجم‌ها</option><option value="1e5">۱۰۰K و بالاتر</option><option value="1e6">۱M و بالاتر</option><option value="1e7">۱۰M و بالاتر</option></select>
@@ -138,14 +140,14 @@ let D=SAMPLE.map(w=>({label:w[0],acct:w[1],pos:w[2].map(p=>({coin:p[0],side:p[1]
 let meta={sample:true,time:null},tab="senti";
 function bar(l,s){const b=el("div","bar"),a=el("i"),c=el("i"),t=(l+s)||1;a.style.width=(100*l/t)+"%";a.style.background="var(--g)";c.style.width=(100*s/t)+"%";c.style.background="var(--r)";b.append(a,c);return b}
 function tbl(heads,rows){const w=el("div","tw"),t=el("table"),tr=el("tr");heads.forEach(h=>tr.append(el("th",0,h)));const th=el("thead");th.append(tr);t.append(th);const tb=el("tbody");rows.forEach(r=>{const tr=el("tr");r.forEach(c=>{const td=el("td",c[1]||"",c[0]);if(c[2])td.append(c[2]);tr.append(td)});tb.append(tr)});t.append(tb);w.append(t);return w}
-function flat(){const q=$("#q").value.trim().toUpperCase(),sd=$("#sd").value,mn=+$("#mn").value,o=[];D.forEach(w=>w.pos.forEach(p=>{if(p.n>=mn&&(!q||p.coin.toUpperCase().includes(q))&&(!sd||p.side===sd))o.push({...p,w:w.label,acct:w.acct})}));return o.sort((a,b)=>b.n-a.n)}
+function flat(){const q=$("#q").value.trim().toUpperCase(),sd=$("#sd").value,mn=+$("#mn").value,o=[];D.forEach(w=>w.pos.forEach(p=>{if(p.n>=mn&&(!q||p.coin.toUpperCase().includes(q)||("#"+w.num)===q)&&(!sd||p.side===sd))o.push({...p,w:w.label,acct:w.acct,num:w.num})}));return o.sort((a,b)=>b.n-a.n)}
 function posRow(p,withW){const c=p.side==="L"?"g":"r";const r=[];if(withW)r.push([p.w,"num"]);r.push([p.coin,"num"],[p.side==="L"?"Long":"Short",c],[M(p.n),"num"],[P(p.entry),"num"],[P(p.liq),"num"],[M(p.upnl),"num "+(p.upnl>=0?"g":"r")],[p.lev==null?"-":p.lev+"x","num"]);return r}
 const PH=()=>[TR("نماد"),TR("سمت"),TR("حجم"),"Entry","Liq",TR("سود/زیان"),TR("اهرم")];
 function gauge(p){const a=Math.PI*(1-p),x=60+50*Math.cos(a),y=60-50*Math.sin(a),f=(c,d)=>`<path d="${d}" fill="none" stroke="${c}" stroke-width="10" stroke-linecap="round"/>`;
   return `<svg viewBox="0 0 120 68" width="132">${f("var(--r)","M10 60A50 50 0 0 1 110 60")}${p>.01?f("var(--g)",`M10 60A50 50 0 0 1 ${x.toFixed(1)} ${y.toFixed(1)}`):""}</svg>`}
 function render(){
   if(mode==="free"&&PUB){["#q","#sd","#mn"].forEach(z=>{$(z).style.display="none"});const v0=$("#view");v0.replaceChildren();freeRender(v0);return}
-  const F=flat(),v=$("#view");v.replaceChildren();["#q","#sd","#mn"].forEach(z=>{$(z).style.display=(tab==="senti"||tab==="rank")?"none":""});
+  const F=flat(),v=$("#view");v.replaceChildren();["#q","#sd","#mn"].forEach(z=>{$(z).style.display=(tab==="senti"||tab==="rank"||tab==="fav")?"none":""});
   const L=F.filter(p=>p.side==="L").reduce((s,p)=>s+p.n,0),S=F.filter(p=>p.side==="S").reduce((s,p)=>s+p.n,0),T=(L+S)||1;
   const cards=$("#cards");cards.replaceChildren();
   const card=(k,val,sub,extra,tp)=>{const c=el("div","card"),h=el("span","mu",k);if(tp)h.append(tip(tp));c.append(h,el("b",0,val));if(sub)c.append(el("small",0,sub));if(extra)c.append(extra);cards.append(c)};
@@ -155,7 +157,7 @@ function render(){
   const gd=el("div");gd.innerHTML=gauge(L/T);gd.append(pbar(L,S));card(TR("تمایل بازار (به دلار)"),Math.round(100*L/T)+"% Long",null,gd,X("سهم Long از کل حجم پوزیشن‌ها به دلار، فقط برای نهنگ‌های همین فیلتر. شاخص کلی در تب سنتیمنت است.","Long share of total position size in dollars, for the current filter only. See the Sentiment tab for the overall index."));
   card(TR("پرحجم‌ترین نماد"),tc?tc[0]:"-",tc?"$"+M(tc[1]):"",null,null,X("نمادی که بیشترین حجم پوزیشن نهنگ‌ها روی آن است.","The symbol with the largest total whale position size."));
   if(!F.length){v.append(el("div","note",TR("با این فیلترها پوزیشنی پیدا نشد.")));return}
-  if(tab==="senti"){sentiView(v)}else if(tab==="rank"){rankView(v)}else if(tab==="herd"){
+  if(tab==="senti"){sentiView(v)}else if(tab==="rank"){rankView(v)}else if(tab==="fav"){favView(v)}else if(tab==="herd"){
     const H={};F.forEach(p=>{const h=H[p.coin]||(H[p.coin]={l:0,s:0,nl:0,ns:0,mx:0});if(p.side==="L"){h.l+=p.n;h.nl++}else{h.s+=p.n;h.ns++}h.mx=Math.max(h.mx,p.n)});
     const rows=Object.entries(H).sort((a,b)=>(b[1].l+b[1].s)-(a[1].l+a[1].s)).slice(0,20),mx=Math.max(...rows.map(r=>Math.max(r[1].l,r[1].s)))||1;
     const box=el("div","panel bf"),hd=el("div","bfh");hd.append(el("span","r","◀ Short"),el("span","mu",TR("نماد")),el("span","g","Long ▶"));box.append(hd);
@@ -170,8 +172,8 @@ function render(){
     Object.entries(G).sort((a,b)=>tot(b[1])-tot(a[1])).forEach(([w,ps])=>{
       const l=tot(ps.filter(p=>p.side==="L")),s=tot(ps.filter(p=>p.side==="S")),d=el("details","wc"),sm=el("summary"),top=el("div","wt"),av=el("span","av",w.replace(/^0x/,"").slice(0,2).toUpperCase()),nm=el("span","nm"),ch=el("div","chips"),wm=el("div","wm");
       av.style.background="hsl("+([...w].reduce((a,c)=>a+c.charCodeAt(0),0)*7%360)+" 55% 45%)";
-      nm.append(el("b",0,w),el("small","mu",TR("حساب ")+M(ps[0].acct)));
-      const ob=el("button","btn",TR("صفحه‌ی نهنگ ←"));ob.onclick=e=>{e.preventDefault();e.stopPropagation();openW(w)};top.append(av,nm,el("span","tag "+(l>=s?"g":"r"),l>=s?"Long-heavy":"Short-heavy"),ob);
+      nm.append(el("b",0,w),el("small","mu",(ps[0].num!=null?"#"+ps[0].num+" · ":"")+TR("حساب ")+M(ps[0].acct)));
+      const ob=el("button","btn",TR("صفحه‌ی نهنگ ←"));ob.onclick=e=>{e.preventDefault();e.stopPropagation();openW(w)};top.append(av,nm,el("span","tag "+(l>=s?"g":"r"),l>=s?"Long-heavy":"Short-heavy"),starBtn(ps[0].num),ob);
       wm.append(el("span",0,TR("حجم $")+M(l+s)),el("span","mu",ps.length+TR(" پوزیشن · برای جزئیات کلیک کن")));
       ps.slice(0,3).forEach(p=>ch.append(el("span","chip "+(p.side==="L"?"g":"r"),p.coin+" "+M(p.n))));
       sm.append(top,pbar(l,s),wm,ch);d.append(sm,tbl(PH(),ps.map(p=>posRow(p,false))));grid.append(d)});
@@ -180,7 +182,7 @@ function render(){
     v.append(tbl([TR("نهنگ"),...PH()],F.slice(0,200).map(p=>posRow(p,true))));
   }
 }
-function mapSnap(s){return (s.whales||[]).map(w=>({label:w.name||(String(w.address).slice(0,6)+".."+String(w.address).slice(-4)),addr:w.address,perf:w.perf,acct:w.account_value,pos:(w.positions||[]).map(p=>({coin:String(p.coin),side:p.side==="LONG"?"L":"S",n:+p.notional||0,size:p.size,entry:p.entry,liq:p.liq,upnl:p.upnl,lev:p.leverage}))}))}
+function mapSnap(s){return (s.whales||[]).map(w=>({label:w.name||(String(w.address).slice(0,6)+".."+String(w.address).slice(-4)),addr:w.address,num:w.num,perf:w.perf,acct:w.account_value,pos:(w.positions||[]).map(p=>({coin:String(p.coin),side:p.side==="LONG"?"L":"S",n:+p.notional||0,size:p.size,entry:p.entry,liq:p.liq,upnl:p.upnl,lev:p.leverage}))}))}
 
 const CATS=[["اصلی (BTC/ETH)",["BTC","ETH"]],["میم‌کوین‌ها",["DOGE","kPEPE","kSHIB","kBONK","kFLOKI","WIF","FARTCOIN","PENGU","POPCAT","MOODENG","TRUMP","MELANIA","PUMP","USELESS","TURBO","BOME","MEME","GOAT","BRETT","SPX","CASHCAT","PNUT"]],["بزرگ‌ها و لایه ۱",["SOL","BNB","XRP","ADA","TRX","AVAX","DOT","ATOM","NEAR","SUI","APT","LTC","BCH","XLM","HBAR","HYPE"]]];
 const catOf=c=>(CATS.find(x=>x[1].includes(c))||["سایر آلت‌کوین‌ها"])[0];
@@ -197,9 +199,9 @@ function openW(label,keep){
   const wrap=el("div","wrap"),back=el("button","btn",TR("← بازگشت به لیست"));back.onclick=closeW;wrap.append(back);
   const hd=el("div","hd"),av=el("span","av",label.replace(/^0x/,"").slice(0,2).toUpperCase()),tt=el("div");
   av.style.background="hsl("+([...label].reduce((a,c)=>a+c.charCodeAt(0),0)*7%360)+" 55% 45%)";
-  tt.append(el("h2",0,label));
+  tt.append(el("h2",0,label+(w.num!=null?"  #"+w.num:"")));
   if(w.addr){const a=el("div","addr",w.addr),cp=el("button","btn",TR("کپی آدرس"));cp.onclick=()=>{try{navigator.clipboard.writeText(w.addr);cp.textContent=TR("کپی شد ✓")}catch(e){}};tt.append(a,cp)}
-  hd.append(av,tt,el("span","tag "+(L>=S?"g":"r"),L>=S?"Long-heavy":"Short-heavy"));wrap.append(hd);
+  hd.append(av,tt,el("span","tag "+(L>=S?"g":"r"),L>=S?"Long-heavy":"Short-heavy"),starBtn(w.num));wrap.append(hd);
   const cards=el("div","cards"),card=(k,v,sub,cl,tp)=>{const c=el("div","card"),h=el("span","mu",k);if(tp)h.append(tip(tp));c.append(h,el("b",cl||0,v));if(sub)c.append(el("small",0,sub));cards.append(c)};
   card(TR("ارزش حساب (Perp)"),"$"+M(w.acct),null,null,X("سرمایه‌ی واقعی نهنگ در حساب معاملات آتی (Perp): موجودی به‌اضافه‌ی سود/زیان باز. این «حجم معاملات» نیست؛ نهنگ با اهرم می‌تواند پوزیشن‌هایی چند برابر این عدد باز کند.","The whale’s actual capital in its perp account: balance plus open PnL. It is not trading volume; with leverage a whale can hold positions several times this amount."));card(TR("حجم کل پوزیشن‌ها"),"$"+M(tot),ps.length+TR(" پوزیشن باز"),null,X("مجموع ارزش دلاری همه‌ی پوزیشن‌های باز این نهنگ. با اهرم می‌تواند از ارزش حساب بزرگ‌تر باشد.","Total dollar value of all this whale’s open positions. With leverage it can exceed the account value."));
   card(TR("اهرم مؤثر"),w.acct>0?(tot/w.acct).toFixed(1)+"x":"-",TR("حجم ÷ ارزش حساب"),null,X("حجم کل پوزیشن‌ها ÷ ارزش حساب. مثلاً 4.6x یعنی به‌ازای هر ۱ دلار سرمایه، ۴٫۶ دلار پوزیشن باز است؛ پس حدود ۲۲٪ حرکت قیمت خلاف جهت (۱÷۴٫۶) تقریباً کل ارزش حساب را از بین می‌برد. این با اهرم تنظیم‌شده‌ی هر پوزیشن (ستون «اهرم») فرق دارد.","Total position size ÷ account value. E.g. 4.6x means $4.6 of positions per $1 of capital, so a ~22% move against all positions (1÷4.6) would roughly wipe out the account. This differs from the per-position leverage setting (Lev. column)."));card(TR("سود/زیان باز (کل)"),(up>=0?"+":"")+M(up),null,up>=0?"g":"r",X("سود/زیان تحقق‌نیافته‌ی پوزیشن‌های باز؛ تا وقتی پوزیشن بسته نشده قطعی نیست.","Unrealized PnL of open positions; not final until the positions are closed."));
@@ -224,6 +226,7 @@ function openW(label,keep){
   LG(`از نظر حجم رتبه‌ی ${rank} از ${D.length} نهنگ ردیابی‌شده را دارد (${Math.round(100*tot/sum)}٪ از کل حجم نهنگ‌ها).`,`Ranks #${rank} of ${D.length} tracked whales by size (${Math.round(100*tot/sum)}% of all tracked size).`)]})().filter(Boolean).forEach(t=>ins.append(el("li",0,t)));
   wrap.append(el("div","sec",TR("خلاصه‌ی هوشمند")),Object.assign(el("div","panel"),{}));wrap.lastChild.append(ins);
   if(w.perf){const row=el("div","chips");[["day",TR("روز")],["week",TR("هفته")],["month",TR("ماه")],["allTime",TR("کل")]].forEach(([k,f])=>{const x=w.perf[k];if(x&&x.pnl!=null)row.append(el("span","chip pf "+(x.pnl>=0?"g":"r"),f+": "+(x.pnl>=0?"+":"")+M(x.pnl)+(x.roi!=null?" ("+(x.roi*100).toFixed(1)+"%)":"")))});wrap.append(el("div","sec",TR("عملکرد (سود و بازده)")),row)}
+  const mine=EV.filter(e=>e.n===w.num).slice(-8).reverse();if(mine.length){const pe=el("div","panel");mine.forEach(e=>pe.append(evRow(e,false)));wrap.append(el("div","sec",X("آخرین رویدادهای این نهنگ","Latest events for this whale")),pe)}
   const C={};ps.forEach(p=>{const c=C[catOf(p.coin)]||(C[catOf(p.coin)]={l:0,s:0});p.side==="L"?c.l+=p.n:c.s+=p.n});
   const cp=el("div","panel");Object.entries(C).sort((a,b)=>(b[1].l+b[1].s)-(a[1].l+a[1].s)).forEach(([k,c])=>{const r=el("div","cr");r.append(el("b",0,TR(k)),pbar(c.l,c.s),el("span","mu",M(c.l+c.s)+" · "+Math.round(100*(c.l+c.s)/tot)+"%"));cp.append(r)});
   wrap.append(el("div","sec",TR("تمرکز پرتفو بر اساس دسته")),cp);
@@ -235,7 +238,7 @@ function openW(label,keep){
 const P_=v=>P(v);
 function applyStatic(){
   const xs=(sel,a,b)=>{const e=document.querySelector(sel);if(e)e.textContent=X(a,b)};
-  xs('[data-t="senti"]',"سنتیمنت","Sentiment");xs('[data-t="rank"]',"برترین‌ها","Top performers");
+  xs('[data-t="senti"]',"سنتیمنت","Sentiment");xs('[data-t="rank"]',"برترین‌ها","Top performers");xs('[data-t="fav"]',"⭐ علاقه‌مندی‌ها","⭐ Favorites");
   const lb=document.querySelector('label[for="f"]');if(lb)lb.style.display=ADMIN?"":"none";
   const R=document.documentElement;R.lang=LANG;R.dir=LANG==="en"?"ltr":"rtl";document.title="MAHQuant Whale Sonar";
   const set=(sel,fa,i)=>{const e=i==null?document.querySelector(sel):document.querySelectorAll(sel)[i];if(e)e.textContent=TR(fa)};
@@ -244,7 +247,7 @@ function applyStatic(){
   set("#sd option","همه‌ی سمت‌ها",0);set("#mn option","همه‌ی حجم‌ها",0);set("#mn option","۱۰۰K و بالاتر",1);set("#mn option","۱M و بالاتر",2);set("#mn option","۱۰M و بالاتر",3);
   const q=document.querySelector("#q");if(q)q.placeholder=TR("جست‌وجوی نماد (BTC ...)");
   set("footer","این پنل فقط اطلاعات نمایش می‌دهد و توصیه‌ی مالی نیست. داده‌ها از API عمومی Hyperliquid گرفته می‌شود.");
-  const f=document.querySelector("footer");if(f)f.textContent+=" · MAHQuant · v0.9.2";
+  const f=document.querySelector("footer");if(f)f.textContent+=" · MAHQuant · v1.0";
   const b=document.querySelector("#lg");if(b)b.textContent=LANG==="en"?"فارسی":"EN";
 }
 function setLang(){LANG=LANG==="en"?"fa":"en";try{localStorage.setItem("lang",LANG)}catch(e){}applyStatic();status();render();if(curW)openW(curW,1)}
@@ -283,8 +286,8 @@ function rankView(v){
   ct.append(sel([["day",X("امروز","Day")],["week",X("هفته","Week")],["month",X("ماه","Month")],["allTime",X("کل دوره","All-time")]],rk.p,x=>rk.p=x),sel([["pnl",X("بر اساس سود دلاری","By profit ($)")],["roi",X("بر اساس بازده (ROI)","By ROI")]],rk.m,x=>rk.m=x),sel([["0",X("همه‌ی حساب‌ها","All accounts")],["1e6",X("حساب ≥ 1M","Account ≥ 1M")],["1e7",X("حساب ≥ 10M","Account ≥ 10M")]],rk.a,x=>rk.a=x));
   v.append(ct);
   const rows=D.filter(w=>w.perf&&w.perf[rk.p]&&w.perf[rk.p][rk.m]!=null&&(w.acct||0)>=+rk.a).sort((a,b)=>b.perf[rk.p][rk.m]-a.perf[rk.p][rk.m]).slice(0,50).map((w,i)=>{
-    const x=w.perf[rk.p],l=w.pos.reduce((s,p)=>s+(p.side==="L"?p.n:0),0),q=w.pos.reduce((s,p)=>s+(p.side==="S"?p.n:0),0),a=el("a","lk",w.label);a.onclick=()=>openW(w.label);
-    return[[String(i+1),"num"],["","",a],[(x.pnl>=0?"+":"")+M(x.pnl),"num "+(x.pnl>=0?"g":"r")],[x.roi==null?"-":(x.roi*100).toFixed(1)+"%","num "+(x.roi>=0?"g":"r")],[M(x.vlm),"num"],[M(w.acct),"num"],[l>=q?"Long":"Short",l>=q?"g":"r"]]});
+    const x=w.perf[rk.p],l=w.pos.reduce((s,p)=>s+(p.side==="L"?p.n:0),0),q=w.pos.reduce((s,p)=>s+(p.side==="S"?p.n:0),0),a=el("a","lk",w.label);a.onclick=()=>openW(w.label);const sp=el("span");sp.append(starBtn(w.num),a,el("small","mu",w.num!=null?" #"+w.num:""));
+    return[[String(i+1),"num"],["","",sp],[(x.pnl>=0?"+":"")+M(x.pnl),"num "+(x.pnl>=0?"g":"r")],[x.roi==null?"-":(x.roi*100).toFixed(1)+"%","num "+(x.roi>=0?"g":"r")],[M(x.vlm),"num"],[M(w.acct),"num"],[l>=q?"Long":"Short",l>=q?"g":"r"]]});
   if(!rows.length){v.append(el("div","note",X("داده‌ی عملکرد در دسترس نیست.","Performance data is not available.")));return}
   v.append(tbl(["#",X("نهنگ","Whale"),X("سود/زیان","PnL"),"ROI",X("حجم معاملات","Volume"),X("ارزش حساب","Account"),X("جهت فعلی","Current bias")],rows),el("footer",0,X("بازده‌ی حساب‌های کوچک ممکن است گمراه‌کننده باشد؛ برای مقایسه‌ی عادلانه‌تر حداقل ارزش حساب را انتخاب کن. عملکرد گذشته تضمین آینده نیست.","ROI on small accounts can be misleading; choose a minimum account value for a fairer comparison. Past performance does not guarantee future results.")));
 }
@@ -294,10 +297,10 @@ const BASE="https://raw.githubusercontent.com/mskeyvani/whale-sonar/data/",BUY_U
 let mode="free",PUB=null,LIC=null;
 const fj=async n=>{const r=await fetch(BASE+n+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error(n+" "+r.status);return r.json()};
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)),hex=h=>Uint8Array.from(h.match(/../g).map(x=>parseInt(x,16)));
-function parseLic(t){try{t=String(t||"").trim();if(!t.startsWith("MQ1."))return null;let p=t.slice(4).replace(/-/g,"+").replace(/_/g,"/");while(p.length%4)p+="=";const o=JSON.parse(atob(p));return o&&o.id&&/^[0-9a-f]{64}$/.test(o.key||"")&&/^\d{4}-\d\d-\d\d$/.test(o.exp||"")?o:null}catch(e){return null}}
+function parseLic(t){try{t=String(t||"").trim();if(!t.startsWith("MQ1."))return null;let p=t.slice(4).replace(/-/g,"+").replace(/_/g,"/");while(p.length%4)p+="=";const o=JSON.parse(atob(p));return o&&o.id&&/^[0-9a-f]{64}$/.test(o.key||"")?o:null}catch(e){return null}}
 async function unlock(L){const [K,E]=await Promise.all([fj("keys.json"),fj("data.enc.json")]);const w=K.keys[L.id];if(!w)throw new Error("inactive");
   const S=crypto.subtle,ku=await S.importKey("raw",hex(L.key),"AES-GCM",false,["decrypt"]);
-  const dk=await S.importKey("raw",await S.decrypt({name:"AES-GCM",iv:b64(w.iv)},ku,b64(w.ct)),"AES-GCM",false,["decrypt"]);
+  const info=JSON.parse(new TextDecoder().decode(await S.decrypt({name:"AES-GCM",iv:b64(w.iv)},ku,b64(w.ct))));L.exp=info.exp;L.plan=info.plan||L.plan;const dk=await S.importKey("raw",b64(info.dk),"AES-GCM",false,["decrypt"]);
   return JSON.parse(new TextDecoder().decode(await S.decrypt({name:"AES-GCM",iv:b64(E.iv)},dk,b64(E.ct))))}
 let licMsg="";
 async function pull(){
@@ -305,7 +308,7 @@ async function pull(){
   try{PUB=await fj("public.json")}catch(e){PUB=null}
   if(LIC){try{snap=await unlock(LIC);mode="paid"}catch(e){mode="free";licMsg=/404/.test(e.message)?"":(e.message==="inactive"?(LIC.exp<new Date().toISOString().slice(0,10)?"expired":"inactive"):"invalid")}}
   if(!snap&&licMsg===""){try{snap=await fj("data.json");mode="open"}catch(e){mode="free"}}
-  if(snap){D=mapSnap(snap);meta={sample:false,live:true,time:Date.parse(snap.generated_at)||Date.now()}}
+  if(snap){D=mapSnap(snap);EV=snap.events||[];meta={sample:false,live:true,time:Date.parse(snap.generated_at)||Date.now()}}
   else if(PUB){D=[];meta={sample:false,live:true,time:Date.parse(PUB.generated_at)||Date.now()}}
   else{if(meta.sample)$("#msg").textContent=TR("دریافت خودکار داده ممکن نشد؛ نمونه نمایش داده می‌شود. می‌توانی snapshot.json را دستی بارگذاری کنی.");return}
   status();render();openHash();if(curW&&mode!=="free")openW(curW,1);
@@ -346,6 +349,32 @@ function openThemes(){const P=$("#tp");if(!P.hidden){P.hidden=true;return}P.repl
   Object.entries(THEMES).forEach(([id,t])=>{const b=el("button","th"+(id===THEME?" sel":"")),d=el("span","dots");[t.v[0],t.v[8],t.v[6],t.v[7]].forEach(c=>{const i=el("i");i.style.background=c;d.append(i)});
     b.append(d,el("span",0,X(t.n[0],t.n[1])));b.onclick=()=>{applyTheme(id);P.hidden=true;status();render()};P.append(b)})}
 addEventListener("click",e=>{const P=$("#tp");if(P&&!P.hidden&&!(e.target.closest&&(e.target.closest("#tp")||e.target.closest("#th"))))P.hidden=true});
+let EV=[],FAV=[],evAll=false;try{FAV=JSON.parse(localStorage.getItem("mq_fav")||"[]")}catch(e){}
+const saveFav=()=>{try{localStorage.setItem("mq_fav",JSON.stringify(FAV))}catch(e){}};
+function toggleFav(n){const i=FAV.indexOf(n);if(i>=0)FAV.splice(i,1);else FAV.push(n);saveFav();render();if(curW)openW(curW,1)}
+function starBtn(n){if(n==null)return el("span");const f=FAV.includes(n),b=el("button","star"+(f?" on":""),f?"★":"☆");b.title=X("علاقه‌مندی","Favorite");b.onclick=e=>{e.preventDefault();e.stopPropagation();toggleFav(n)};return b}
+const ago=t=>{const m=Math.max(0,Math.round((Date.now()-Date.parse(t))/6e4));return m<60?m+X(" دقیقه پیش"," min ago"):m<1440?Math.round(m/60)+X(" ساعت پیش"," h ago"):Math.round(m/1440)+X(" روز پیش"," d ago")};
+const KT=()=>({open:X("باز کرد","opened"),close:X("بست","closed"),add:X("حجم را زیاد کرد","added"),reduce:X("حجم را کم کرد","reduced"),reduce_profit:X("حجم را کم کرد (در سود؛ احتمالاً برداشت سود)","reduced in profit (possible profit-taking)"),flip:X("جهت را برعکس کرد","flipped direction")});
+function evRow(e,withW){const r=el("div","ev"),w=D.find(x=>x.num===e.n);r.append(el("span","mu",ago(e.t)));
+  if(withW&&w){const a=el("a","lk","#"+e.n+" "+w.label);a.onclick=()=>openW(w.label);r.append(a)}
+  r.append(el("span",e.side==="LONG"?"g":"r",e.coin+" "+(e.side==="LONG"?"Long":"Short")),el("span",0,KT()[e.k]||e.k),el("span","mu","$"+M(e.nt)+(e.d?" (Δ "+(e.d>0?"+":"")+M(e.d)+")":"")));return r}
+function favView(v){
+  const fw=D.filter(w=>FAV.includes(w.num)),bx=el("div","ctl"),ex=el("button","btn",X("کپی لیست","Copy list")),inp=el("input"),im=el("button","btn",X("وارد کردن","Import"));
+  inp.type="search";inp.placeholder="MQFAV:1,5,12";
+  ex.onclick=()=>{try{navigator.clipboard.writeText("MQFAV:"+FAV.join(","));ex.textContent=X("کپی شد ✓","Copied ✓")}catch(e){}};
+  im.onclick=()=>{const m=/^MQFAV:([\d,]*)$/.exec(inp.value.trim());if(!m)return;FAV=[...new Set([...FAV,...m[1].split(",").filter(Boolean).map(Number)])];saveFav();render()};
+  bx.append(ex,inp,im);v.append(bx);
+  if(!FAV.length)v.append(el("div","note",X("هنوز نهنگی انتخاب نکرده‌ای. روی ☆ کنار هر نهنگ بزن تا اینجا بیاید.","No favorites yet. Tap ☆ next to a whale to add it here.")));
+  else{const rows=fw.map(w=>{const l=w.pos.reduce((s,p)=>s+(p.side==="L"?p.n:0),0),q=w.pos.reduce((s,p)=>s+(p.side==="S"?p.n:0),0),a=el("a","lk",w.label),last=EV.filter(e=>e.n===w.num).slice(-1)[0];a.onclick=()=>openW(w.label);
+      return[["#"+w.num,"num"],["","",a],[M(w.acct),"num"],[M(l+q),"num"],[l>=q?"Long":"Short",l>=q?"g":"r"],[last?ago(last.t):"-","mu"],["","",starBtn(w.num)]]});
+    v.append(tbl(["#",X("نهنگ","Whale"),X("ارزش حساب","Account"),X("حجم","Size"),X("جهت","Bias"),X("آخرین رویداد","Last event"),""],rows));
+    if(fw.length<FAV.length)v.append(el("footer",0,X((FAV.length-fw.length)+" نهنگ منتخب فعلاً در فهرست ردیابی نیست.",(FAV.length-fw.length)+" favorite(s) are not in the tracked list right now.")))}
+  const sw=el("div","seg");[[false,X("رویدادهای علاقه‌مندی‌ها","Favorites activity")],[true,X("همه‌ی نهنگ‌ها","All whales")]].forEach(([k,l])=>{const b=el("button",evAll===k?"on":"",l);b.onclick=()=>{evAll=k;render()};sw.append(b)});
+  const list=EV.filter(e=>evAll||FAV.includes(e.n)).slice(-60).reverse();v.append(el("div","sec",X("گزارش فعالیت","Activity feed")),sw);
+  if(!list.length)v.append(el("div","note",X("هنوز رویدادی ثبت نشده. پس از چند اجرای متوالی (هر ۵ دقیقه) رویدادها اینجا می‌آیند.","No events yet. They appear after a few consecutive updates (every 5 minutes).")));
+  else{const p=el("div","panel");list.forEach(e=>p.append(evRow(e,true)));v.append(p)}
+}
+
 function status(){
   setTimeout(()=>{if(mode==="free"&&!meta.sample&&PUB)$("#msg").textContent=freeMsg();licBtn()},0);
   const s=$("#st"),a=$("#age");
@@ -359,7 +388,7 @@ $("#f").addEventListener("change",e=>{
   const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{
     const s=JSON.parse(r.result);
-    D=mapSnap(s);mode="open";
+    D=mapSnap(s);mode="open";EV=s.events||[];
     meta={sample:false,time:Date.parse(s.generated_at)||Date.now()};status();render();
   }catch(err){$("#msg").textContent=TR("فایل خوانده نشد. مطمئن شو snapshot.json خروجی whale_probe2.py است.")}};
   r.readAsText(f);
