@@ -21,6 +21,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Load previous state (whale numbers and events) from the data branch
+        run: |
+          set -e
+          rc=0
+          git ls-remote --exit-code --heads origin data >/dev/null 2>&1 || rc=$?
+          if [ "$rc" -eq 0 ]; then
+            git fetch --depth=1 origin data
+            git show FETCH_HEAD:state.json > state_prev.json || { echo "no state.json yet (first run of this version)"; rm -f state_prev.json; }
+          elif [ "$rc" -eq 2 ]; then
+            echo "data branch does not exist yet: fresh start"
+          else
+            echo "cannot reach GitHub (code $rc); stopping so numbering is never reset"; exit 1
+          fi
       - name: Install crypto library
         run: pip install cryptography
       - name: Check license setup (prints no secret)
