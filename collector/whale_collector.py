@@ -24,13 +24,14 @@ import sys
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
 LEADERBOARD_URL = "https://stats-data.hyperliquid.xyz/Mainnet/leaderboard"
 INFO_URL = "https://api.hyperliquid.xyz/info"
-USER_AGENT = "Mozilla/5.0 (WhaleSonarCollector/0.6)"
+USER_AGENT = "Mozilla/5.0 (WhaleSonarCollector/0.7)"
 
 
 def http_json(url, payload=None, timeout=30, retries=3):
@@ -282,22 +283,69 @@ def compute_events(prev, kept, now):
     return out
 
 
+def fetch_remote_licenses(url, secret):
+    """Reads the active license list from the central Google Sheet (Apps Script web app)."""
+    q = url + ("&" if "?" in url else "?") + urllib.parse.urlencode({"action": "list", "product": "whalesonar", "secret": secret})
+    req = urllib.request.Request(q, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        obj = json.loads(r.read().decode("utf-8"))
+    if obj.get("ok") is not True or not isinstance(obj.get("licenses"), list):
+        raise RuntimeError(f"unexpected answer: {str(obj)[:80]}")
+    out = []
+    for l in obj["licenses"]:
+        if not (HEX8.match(str(l["id"])) and DATE.match(str(l["exp"]))):
+            raise RuntimeError(f"bad license entry: {l}")
+        out.append({"id": l["id"], "exp": l["exp"], "plan": l.get("plan", ""), "revoked": bool(l.get("revoked"))})
+    return out
+
+
+def _file_licenses(path):
+    with open(path, encoding="utf-8") as f:
+        raw = json.load(f)
+    assert isinstance(raw, list)
+    lics = []
+    for l in raw:
+        assert HEX8.match(str(l["id"])) and DATE.match(str(l["exp"]))
+        lics.append({"id": l["id"], "exp": l["exp"], "plan": l.get("plan", ""), "revoked": bool(l.get("revoked"))})
+    return lics
+
+
 def read_licenses(path, state):
-    """Valid file -> use it and remember it. Broken file -> keep using the last valid list (nobody gets locked out)."""
+    """Sources, in this order: central sheet (+ licenses.json merged in), then licenses.json alone,
+    and if the sheet is configured but unreachable, the last valid list is kept so nobody is locked out."""
+    url = os.environ.get("LICENSES_URL", "").strip()
+    sec = os.environ.get("LICENSES_SECRET", "").strip()
+    remote = local = None
+    if url and sec:
+        try:
+            remote = fetch_remote_licenses(url, sec)
+            print(f"central license sheet: {len(remote)} licenses")
+        except Exception as e:
+            print(f"WARNING: central license sheet unavailable ({e})")
     try:
-        with open(path, encoding="utf-8") as f:
-            raw = json.load(f)
-        assert isinstance(raw, list)
-        lics = []
-        for l in raw:
-            assert HEX8.match(str(l["id"])) and DATE.match(str(l["exp"]))
-            lics.append({"id": l["id"], "exp": l["exp"], "plan": l.get("plan", ""), "revoked": bool(l.get("revoked"))})
-        state["lics"] = lics
-        return lics
+        local = _file_licenses(path)
     except Exception as e:
-        last = state.get("lics") or []
-        print(f"WARNING: {path} is missing or invalid ({e}). Using the last valid list ({len(last)} licenses).")
-        return last
+        if os.path.exists(path):
+            print(f"WARNING: {path} is invalid ({e})")
+    now = datetime.now(timezone.utc)
+    if remote is not None:
+        merged = {l["id"]: l for l in (local or [])}
+        merged.update({l["id"]: l for l in remote})          # the sheet wins over the file
+        state["lics"], state["lics_at"] = list(merged.values()), now.isoformat()
+        return state["lics"]
+    if url and sec:                                           # sheet configured but down: never drop paying users
+        merged = {l["id"]: l for l in (state.get("lics") or [])}
+        merged.update({l["id"]: l for l in (local or [])})
+        age = ""
+        if state.get("lics_at"):
+            age = f", last refreshed {(now - datetime.fromisoformat(state['lics_at'])).total_seconds() / 3600:.0f} h ago"
+        print(f"WARNING: using the last valid license list ({len(merged)} licenses{age}). Revocations wait until the sheet is back.")
+        return list(merged.values())
+    if local is not None:
+        state["lics"] = local
+        return local
+    print(f"WARNING: no valid license source; using the last valid list ({len(state.get('lics') or [])} licenses)")
+    return state.get("lics") or []
 
 
 def main():
