@@ -433,7 +433,9 @@ def main():
         os.replace(path + ".tmp", path)
         print(f"saved {path} ({os.path.getsize(path) / 1024:.0f} KB)")
 
-    save("public.json", aggregate(kept, snapshot["generated_at"], snapshot["stats"]))
+    pub = aggregate(kept, snapshot["generated_at"], snapshot["stats"])
+    pub["lic_api"] = os.environ.get("LICENSES_URL", "").strip()      # lets the dashboard send its hourly usage ping
+    save("public.json", pub)
     # (state.json is saved after the license step, because that step may update the last-valid license list)
     master = master_hex
     if master:
