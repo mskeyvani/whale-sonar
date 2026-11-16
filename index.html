@@ -85,6 +85,7 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
 .ev{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--bd)}.ev:last-child{border:0}
 .nr{display:flex;align-items:center;flex-wrap:wrap;gap:4px}.nchip{background:var(--ac);color:var(--on,#fff);font-size:12px;font-weight:700;border-radius:8px;padding:0 8px;line-height:20px}
 .wc .btn{width:100%;margin-top:8px}
+#wm{position:fixed;inset-inline-start:10px;bottom:8px;font-size:11px;opacity:.3;pointer-events:none;direction:ltr;z-index:5}
 </style>
 </head>
 <body>
@@ -108,6 +109,7 @@ footer{color:var(--mu);margin-top:18px;font-size:12px}
 <div id="view"></div>
 <footer>این پنل فقط اطلاعات نمایش می‌دهد و توصیه‌ی مالی نیست. داده‌ها از API عمومی Hyperliquid گرفته می‌شود.</footer>
 </div>
+<div id="wm"></div>
 <div id="tp" class="tp" hidden></div>
 <div id="wp" class="ov" hidden></div>
 <div id="lm" class="ov" hidden></div>
@@ -249,7 +251,7 @@ function applyStatic(){
   set("#sd option","همه‌ی سمت‌ها",0);set("#mn option","همه‌ی حجم‌ها",0);set("#mn option","۱۰۰K و بالاتر",1);set("#mn option","۱M و بالاتر",2);set("#mn option","۱۰M و بالاتر",3);
   const q=document.querySelector("#q");if(q)q.placeholder=TR("جست‌وجوی نماد (BTC ...)");
   set("footer","این پنل فقط اطلاعات نمایش می‌دهد و توصیه‌ی مالی نیست. داده‌ها از API عمومی Hyperliquid گرفته می‌شود.");
-  const f=document.querySelector("footer");if(f)f.textContent+=" · MAHQuant · v1.0.1";
+  const f=document.querySelector("footer");if(f)f.textContent+=" · MAHQuant · v1.1";
   const b=document.querySelector("#lg");if(b)b.textContent=LANG==="en"?"فارسی":"EN";
 }
 function setLang(){LANG=LANG==="en"?"fa":"en";try{localStorage.setItem("lang",LANG)}catch(e){}applyStatic();status();render();if(curW)openW(curW,1)}
@@ -313,7 +315,7 @@ async function pull(){
   if(snap){D=mapSnap(snap);EV=snap.events||[];meta={sample:false,live:true,time:Date.parse(snap.generated_at)||Date.now()}}
   else if(PUB){D=[];meta={sample:false,live:true,time:Date.parse(PUB.generated_at)||Date.now()}}
   else{if(meta.sample)$("#msg").textContent=TR("دریافت خودکار داده ممکن نشد؛ نمونه نمایش داده می‌شود. می‌توانی snapshot.json را دستی بارگذاری کنی.");return}
-  status();render();openHash();if(curW&&mode!=="free")openW(curW,1);
+  status();render();openHash();if(curW&&mode!=="free")openW(curW,1);ping();
 }
 function freeMsg(){return licMsg==="expired"?X("لایسنس منقضی شده است؛ برای تمدید با ما تماس بگیر.","Your license has expired; contact us to renew."):licMsg==="inactive"?X("این لایسنس فعال نیست (ممکن است منقضی یا حذف شده باشد).","This license is not active (expired or removed)."):licMsg==="invalid"?X("لایسنس معتبر نیست یا باز نشد.","The license is not valid or could not be opened."):X("نسخه‌ی رایگان: فقط خلاصه‌ی سنتیمنت. برای دسترسی کامل لایسنس وارد کن.","Free version: sentiment overview only. Enter a license for full access.")}
 function licBtn(){const b=$("#lc");if(!b)return;b.style.display=mode==="open"?"none":"";if(mode==="paid"&&LIC){const d=Math.max(0,Math.ceil((Date.parse(LIC.exp+"T23:59:59Z")-Date.now())/864e5));b.textContent="🔓 "+LIC.plan+" · "+d+X(" روز"," d");b.className="btn"+(d<=5?" r":"")}else{b.textContent="🔑 "+X("ورود لایسنس","Enter license");b.className="btn"}}
@@ -377,8 +379,19 @@ function favView(v){
   else{const p=el("div","panel");list.forEach(e=>p.append(evRow(e,true)));v.append(p)}
 }
 
+let OVER=null,IID="";
+try{IID=localStorage.getItem("mq_iid")||"";if(!IID){IID=Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,"0")).join("");localStorage.setItem("mq_iid",IID)}}catch(e){IID=IID||"tmp"+Math.random().toString(16).slice(2,12)}
+async function ping(){
+  try{if(mode!=="paid"||!LIC||!PUB||!PUB.lic_api)return;
+    const last=+(localStorage.getItem("mq_ping")||0);if(Date.now()-last<55*6e4)return;localStorage.setItem("mq_ping",String(Date.now()));
+    const d=new Date().toISOString().slice(0,10),k=await crypto.subtle.importKey("raw",hex(LIC.key),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
+    const sg=Array.from(new Uint8Array(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode(LIC.id+"|"+IID+"|"+d))),b=>b.toString(16).padStart(2,"0")).join("");
+    const r=await fetch(PUB.lic_api+(PUB.lic_api.includes("?")?"&":"?")+"action=ping&id="+LIC.id+"&iid="+IID+"&d="+d+"&sig="+sg,{cache:"no-store"});
+    const j=await r.json();if(j&&j.ok){OVER=j;status()}
+  }catch(e){try{localStorage.removeItem("mq_ping")}catch(_){}}
+}
 function status(){
-  setTimeout(()=>{if(mode==="free"&&!meta.sample&&PUB)$("#msg").textContent=freeMsg();licBtn()},0);
+  setTimeout(()=>{if(mode==="free"&&!meta.sample&&PUB)$("#msg").textContent=freeMsg();else if(mode==="paid"&&OVER&&OVER.over)$("#msg").textContent=X("هشدار: این لایسنس در چند مرورگر هم‌زمان استفاده شده است. لایسنس فقط برای یک نفر است و استفاده‌ی مشترک ممکن است باعث لغو آن شود.","Warning: this license is being used in several browsers. A license is for one person only; sharing may lead to its cancellation.");licBtn();const w=$("#wm");if(w)w.textContent=mode==="paid"&&LIC?"ID "+LIC.id:""},0);
   const s=$("#st"),a=$("#age");
   if(meta.sample){s.textContent=TR("نمونه");s.className="badge ac";a.textContent="";$("#msg").textContent=TR("این‌ها بخشی از داده‌ی اجرای واقعی قبلی توست. فایل snapshot.json را بارگذاری کن تا داده‌ی خودت نمایش داده شود.");return}
   const m=Math.max(0,Math.round((Date.now()-meta.time)/60000));
